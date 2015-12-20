@@ -2,9 +2,14 @@ rawdatx
 #######
 
 rawdatx is a Python 2.7, 3.4, 3.5 converter that generates Excel xlsx files
-from for Campbell Scientific TOA5 data logger files produced by LoggerNet. 
-Sensor input, processing instructions, and output structure are specified 
+from for Campbell Scientific TOA5 data logger files produced by LoggerNet.
+Sensor input, processing instructions, and output structure are specified
 in a single XML Definition File that also serves as documentation.
+
+rawdatx is available under the MIT license.
+The code of the project is hosted at `<https://github.com/cpetrich/rawdatx>`_
+and packages are available on PyPI at `<https://pypi.python.org/pypi/rawdatx/>`_.
+Documentation is available at `<https://rawdatx.readthedocs.org/>`_.
 
 Installation
 ============
