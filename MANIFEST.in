@@ -3,5 +3,8 @@ recursive-include tests/raw_data *.dat
 recursive-include docs *.rst
 recursive-include docs *.py
 recursive-include examples *.py
+recursive-include examples *.xml
+recursive-include examples *.dat
+recursive-include examples *.cfg
 prune docs/_build
 
