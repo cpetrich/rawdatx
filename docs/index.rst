@@ -90,7 +90,8 @@ Background
 
 Availability
 ------------
-The code of the project is hosted at `<https://github.com/cpetrich/rawdatx>`_
+The code is available under the MIT license.
+The project is hosted at `<https://github.com/cpetrich/rawdatx>`_
 and packages are available on PyPI at `<https://pypi.python.org/pypi/rawdatx/>`_.
 Documentation is available at `<https://rawdatx.readthedocs.org/>`_.
 
