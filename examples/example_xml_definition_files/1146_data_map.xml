@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="latin1"?>
+
+<measurements name="BM180" from="2014/11/1" until="" until-limit="exclusive">
+	<group name="">
+		<map name="Battery" unit="V" src="V_Battery_end_V" />
+	</group>
+	<group name="Weather">
+		<map name="Air Temperature" unit="°C" src="T_air_C" />
+		<def var="speed" src="U_wind_m_per_s" />
+		<map name="Wind Speed" unit="m/s" is="replace_value_with_NaN(speed, 999.99)" />
+		<def var="direction" src="Dir_wind_deg" />
+		<map name="Wind Direction" unit="Degrees" is="replace_value_with_NaN(direction, 999)" />
+	</group>
+	<group name="Reference Profile">
+		<map name="T at 0.25 m" unit="°C" src="TC(6)" />
+		<map name="T at 0.5 m" unit="°C" src="TC(5)" />
+		<map name="T at 1.0 m" unit="°C" src="TC(4)" />
+		<map name="T at 2.0 m" unit="°C" src="TC(3)" />
+		<map name="T at 3.0 m" unit="°C" src="TC(2)" />
+		<map name="T at 3.7 m" unit="°C" src="TC(1)" />
+	</group>
+	<group name="Test Site Profile" from="2014/11/5 14:45" until="2015/02/27 14:05">
+		<!-- exchanged multiplexers on 26 Feb and swapped two TCs in the process inadvertently.
+		     Hence, define hand-over points here -->
+		<def var="TC_34_1" src="TC(34)" until="2015/02/26 17:15"/>
+		<def var="TC_34_2" src="TC(31)" from="2015/02/26 17:15"/>
+		<def var="TC_31_1" src="TC(31)" until="2015/02/26 17:15"/>
+		<def var="TC_31_2" src="TC(34)" from="2015/02/26 17:15"/>
+		
+		<def var="TC_34_virtual" is="where(isnan(TC_34_1),TC_34_2,TC_34_1)" />
+		<def var="TC_31_virtual" is="where(isnan(TC_31_1),TC_31_2,TC_31_1)" />		
+		<!-- end hand-over -->
+		<map name="T at 0.1 m" unit="°C" is="TC_34_virtual" />
+		<map name="T at 0.4 m" unit="°C" src="TC(33)" />
+		<map name="T at 0.8 m" unit="°C" src="TC(32)" />
+		<map name="T at 1.5 m" unit="°C" is="TC_31_virtual" />
+	</group>
+	<group name="HeatWork Connectors" from="2015/02/27 15:00" >
+		<!-- outside temperature at HeatWork connectors -->
+		<!-- there was an over-range error beyond about 64C, which has been corrected by introducing TC_MUX1 on 28 Feb 2015. -->
+		<def var="TFF3_in_1"   src="TC(14)"     until="2015/02/28 18:00" />
+		<def var="TFF3_in_2"   src="TC_MUX1(14)" from="2015/02/28 20:15" />
+		<def var="TFF3_ret_1"  src="TC(15)"     until="2015/02/28 18:00" />
+		<def var="TFF3_ret_2"  src="TC_MUX1(15)" from="2015/02/28 20:15" />
+		<def var="TFF4_in_1"   src="TC(12)"     until="2015/02/28 18:00" />
+		<def var="TFF4_in_2"   src="TC_MUX1(12)" from="2015/02/28 20:15" />
+		<def var="TFF4_ret_1"  src="TC(13)"     until="2015/02/28 18:00" />
+		<def var="TFF4_ret_2"  src="TC_MUX1(13)" from="2015/02/28 20:15" />
+		<map name="Fluid Temp in, Foundation 3"     unit="°C" is="where(isnan(TFF3_in_1),TFF3_in_2,TFF3_in_1)"    until="2015/03/02 12:45" />
+		<map name="Fluid Temp return, Foundation 3" unit="°C" is="where(isnan(TFF3_ret_1),TFF3_ret_2,TFF3_ret_1)" until="2015/03/02 12:45" />
+		<map name="Fluid Temp in, Foundation 4"     unit="°C" is="where(isnan(TFF4_in_1),TFF4_in_2,TFF4_in_1)"    until="2015/03/02 12:15" />
+		<map name="Fluid Temp return, Foundation 4" unit="°C" is="where(isnan(TFF4_ret_1),TFF4_ret_2,TFF4_ret_1)" until="2015/03/02 12:15" />
+		<!-- there are two 0-flow artifacts on 28 Feb (at 19:15 and 20:15) due to change of logging program, resetting the frequency counters -->
+		<def var="glycol" src="Flow_Rate_TRIMEC_C4_L_per_min" />
+		<def var="diesel" src="Flow_Rate_8071_P2_L_per_hour" />
+		<map name="Fluid Flow Rate" unit="L/min" is="replace_time_with_NaN(glycol,['2015/02/28 19:15','2015/02/28 20:15'])" />
+		<map name="Diesel Use" unit="L/h" is="replace_time_with_NaN(diesel,['2015/02/28 19:15','2015/02/28 20:15'])" />
+	</group>
+	<!-- ground temperatures at foundations -->
+	<group name="Foundation 1, Reference" from="2015/02/27 15:00">
+		<map name="T at 0.1 m" unit="°C" src="TC(39)" />
+		<map name="T at 0.4 m" unit="°C" src="TC(40)" />
+		<map name="T at 0.8 m" unit="°C" src="TC(41)" />
+		<map name="T at 1.5 m" unit="°C" src="TC(42)" />
+	</group>
+	<group name="Foundation 1, not heated hole" from="2015/02/27 15:00">
+		<def var="TC43" src="TC(43)" />
+		<def var="TC44" src="TC(44)" />
+		<def var="TC45" src="TC(45)" />
+		<def var="TC46" src="TC(46)" />
+		<map name="T at 0.1 m" unit="°C" is="replace_time_with_NaN(TC43,['2015/03/02 12:00','2015/03/02 11:45'])" />
+		<map name="T at 0.4 m" unit="°C" is="replace_time_with_NaN(TC44,['2015/03/02 12:00','2015/03/02 11:45'])" />
+		<map name="T at 0.8 m" unit="°C" is="replace_time_with_NaN(TC45,['2015/03/02 12:00','2015/03/02 11:45'])" />
+		<map name="T at 1.5 m" unit="°C" is="replace_time_with_NaN(TC46,['2015/03/02 12:00','2015/03/02 11:45'])" />
+	</group>
+	<group name="Foundation 1, heated hole" from="2015/03/02 12:15">
+		<map name="T at 0.1 m" unit="°C" src="TC(47)" />
+		<map name="T at 0.4 m" unit="°C" src="TC(48)" />
+		<map name="T at 0.8 m" unit="°C" src="TC(49)" />
+		<map name="T at 1.5 m" unit="°C" src="TC(50)" />
+	</group>
+	<group name="Foundation 2, Reference" from="2015/02/27 15:00">
+		<map name="T at 0.1 m" unit="°C" src="TC(64)" />
+		<map name="T at 0.4 m" unit="°C" src="TC(65)" />
+		<map name="T at 0.8 m" unit="°C" src="TC(66)" />
+		<map name="T at 1.5 m" unit="°C" src="TC(67)" />
+	</group>
+	<group name="Foundation 2, not heated hole" from="2015/02/27 15:00">
+		<def var="TC68" src="TC(68)" />
+		<def var="TC69" src="TC(69)" />
+		<def var="TC70" src="TC(70)" />
+		<def var="TC71" src="TC(71)" />
+		<map name="T at 0.1 m" unit="°C" is="replace_time_with_NaN(TC68,['2015/03/02 12:15','2015/03/02 12:00','2015/03/02 11:45','2015/03/02 11:30','2015/03/02 11:15'])" />
+		<map name="T at 0.4 m" unit="°C" is="replace_time_with_NaN(TC69,['2015/03/02 12:00','2015/03/02 11:45','2015/03/02 11:30','2015/03/02 11:15'])" />
+		<map name="T at 0.8 m" unit="°C" is="replace_time_with_NaN(TC70,['2015/03/02 12:00','2015/03/02 11:45','2015/03/02 11:30','2015/03/02 11:15'])" />
+		<map name="T at 1.5 m" unit="°C" is="replace_time_with_NaN(TC71,['2015/03/02 12:00','2015/03/02 11:45','2015/03/02 11:30','2015/03/02 11:15'])" />
+	</group>
+	<group name="Foundation 2, heated hole" from="2015/03/02 12:00">
+		<map name="T at 0.1 m" unit="°C" src="TC(72)" />
+		<map name="T at 0.4 m" unit="°C" src="TC(73)" />
+		<map name="T at 0.8 m" unit="°C" src="TC(74)" />
+		<map name="T at 1.5 m" unit="°C" src="TC(75)" />
+	</group>
+	<group name="Foundation 3, Reference" from="2015/02/27 15:00">
+		<def var="TC89" src="TC(89)" />
+		<!-- remove blip in TC 89 just as the sensor stops to function -->
+		<map name="T at 0.1 m" unit="°C" is="replace_time_with_NaN(TC89,'2015/02/28 03:00')" />
+		<map name="T at 0.4 m" unit="°C" src="TC(90)" />
+		<map name="T at 0.8 m" unit="°C" src="TC(91)" />
+		<map name="T at 1.5 m" unit="°C" src="TC(92)" />
+	</group>
+	<group name="Foundation 3, not heated hole" from="2015/02/27 15:00">
+		<def var="TC93" src="TC(93)" />
+		<def var="TC94" src="TC(94)" />
+		<def var="TC95" src="TC(95)" />
+		<def var="TC96" src="TC(96)" />
+		<map name="T at 0.1 m" unit="°C" is="replace_time_with_NaN(TC93,['2015/03/02 13:15','2015/03/02 13:00','2015/03/02 12:45'])" />
+		<map name="T at 0.4 m" unit="°C" is="replace_time_with_NaN(TC94,['2015/03/02 13:15','2015/03/02 13:00','2015/03/02 12:45'])" />
+		<map name="T at 0.8 m" unit="°C" is="replace_time_with_NaN(TC95,['2015/03/02 13:15','2015/03/02 13:00','2015/03/02 12:45'])" />
+		<map name="T at 1.5 m" unit="°C" is="replace_time_with_NaN(TC96,['2015/03/02 13:15','2015/03/02 13:00','2015/03/02 12:45'])" />
+	</group>
+	<group name="Foundation 3, heated hole" from="2015/03/02 13:30">
+		<map name="T at 0.1 m" unit="°C" src="TC(97)" />
+		<map name="T at 0.4 m" unit="°C" src="TC(98)" />
+		<map name="T at 0.8 m" unit="°C" src="TC(99)" />
+		<map name="T at 1.5 m" unit="°C" src="TC(100)" />
+	</group>
+	<group name="Foundation 4, Reference" from="2015/02/27 15:00">
+		<map name="T at 0.1 m" unit="°C" src="TC(114)" />
+		<map name="T at 0.4 m" unit="°C" src="TC(115)" />
+		<map name="T at 0.8 m" unit="°C" src="TC(116)" />
+		<map name="T at 1.5 m" unit="°C" src="TC(117)" />
+	</group>
+	<group name="Foundation 4, not heated hole" from="2015/02/27 15:00">
+		<def var="TC118" src="TC(118)" />
+		<def var="TC119" src="TC(119)" />
+		<def var="TC120" src="TC(120)" />
+		<def var="TC121" src="TC(121)" />
+		<map name="T at 0.1 m" unit="°C" is="replace_time_with_NaN(TC118,['2015/03/02 12:30','2015/03/02 12:15'])" />
+		<map name="T at 0.4 m" unit="°C" is="replace_time_with_NaN(TC119,['2015/03/02 12:30','2015/03/02 12:15'])" />
+		<map name="T at 0.8 m" unit="°C" is="replace_time_with_NaN(TC120,['2015/03/02 12:30','2015/03/02 12:15'])" />
+		<map name="T at 1.5 m" unit="°C" is="replace_time_with_NaN(TC121,['2015/03/02 12:30','2015/03/02 12:15'])" />
+	</group>
+	<group name="Foundation 4, heated hole" from="2015/03/02 12:45">
+		<map name="T at 0.1 m" unit="°C" src="TC(122)" />
+		<map name="T at 0.4 m" unit="°C" src="TC(123)" />
+		<map name="T at 0.8 m" unit="°C" src="TC(124)" />
+		<map name="T at 1.5 m" unit="°C" src="TC(125)" />
+	</group>	
+	<group name="Foundation 1, Footing" from="2015/03/18 07:00">
+		<map name="Center Bottom (1)" unit="°C" src="TC(26)" />
+		<map name="Corner Bottom (2)" unit="°C" src="TC(27)" />
+		<map name="Corner Top (3)"    unit="°C" src="TC(28)" />
+		<map name="Anchor Top (4)"    unit="°C" src="TC(29)" />
+		<map name="Center Top (5)"    unit="°C" src="TC(30)" />
+		<map name="Corner2 Top (6)"   unit="°C" src="TC(31)" />
+	</group>
+	<group name="Foundation 1, Column" from="2015/03/18 07:00">
+		<map name="Side, Away From Heating (7)" unit="°C" src="TC(32)" />
+		<map name="Center (8)"                  unit="°C" src="TC(33)" />
+		<map name="Side, Between Heating (9)"   unit="°C" src="TC(34)" />
+		<map name="Center, At Anchor (10)"      unit="°C" src="TC(35)" />
+		<map name="Side, Near Heating (11)"     unit="°C" src="TC(36)" />
+		<map name="Top, At Anchor (12)"         unit="°C" src="TC(37)" />
+		<map name="Top Corner (13)"             unit="°C" src="TC(38)" />
+	</group>
+	<group name="Foundation 2, Footing" from="2015/03/18 07:00">
+		<map name="Center Bottom (1)" unit="°C" src="TC(51)" />
+		<map name="Corner Bottom (2)" unit="°C" src="TC(52)" />
+		<map name="Corner Top (3)"    unit="°C" src="TC(53)" />
+		<map name="Anchor Top (4)"    unit="°C" src="TC(54)" />
+		<map name="Center Top (5)"    unit="°C" src="TC(55)" />
+		<map name="Corner2 Top (6)"   unit="°C" src="TC(56)" />
+	</group>
+	<group name="Foundation 2, Column" from="2015/03/18 07:00">
+		<map name="Side, Away From Heating (7)" unit="°C" src="TC(57)" />
+		<map name="Center (8)"                  unit="°C" src="TC(58)" />
+		<map name="Side, Between Heating (9)"   unit="°C" src="TC(59)" />
+		<map name="Center, At Anchor (10)"      unit="°C" src="TC(60)" />
+		<map name="Side, Near Heating (11)"     unit="°C" src="TC(61)" />
+		<map name="Top, At Anchor (12)"         unit="°C" src="TC(62)" />
+		<map name="Top Corner (13)"             unit="°C" src="TC(63)" />
+	</group>
+	<group name="Foundation 3, Footing" from="2015/03/18 07:00">
+		<map name="Center Bottom (1)" unit="°C" src="TC(76)" />
+		<map name="Corner Bottom (2)" unit="°C" src="TC(77)" />
+		<map name="Corner Top (3)"    unit="°C" src="TC(78)" />
+		<map name="Anchor Top (4)"    unit="°C" src="TC(79)" />
+		<map name="Center Top (5)"    unit="°C" src="TC(80)" />
+		<map name="Corner2 Top (6)"   unit="°C" src="TC(81)" />
+	</group>
+	<group name="Foundation 3, Column" from="2015/03/18 07:00">
+		<map name="Side, Away From Heating (7)" unit="°C" src="TC(82)" />
+		<map name="Center (8)"                  unit="°C" src="TC(83)" />
+		<map name="Side, Between Heating (9)"   unit="°C" src="TC(84)" />
+		<map name="Center, At Anchor (10)"      unit="°C" src="TC(85)" />
+		<map name="Side, Near Heating (11)"     unit="°C" src="TC(86)" />
+		<map name="Top, At Anchor (12)"         unit="°C" src="TC(87)" />
+		<map name="Top Corner (13)"             unit="°C" src="TC(88)" />
+	</group>	
+	<group name="Foundation 4, Footing" from="2015/03/18 07:00">
+		<map name="Center Bottom (1)" unit="°C" src="TC(101)" />
+		<map name="Corner Bottom (2)" unit="°C" src="TC(102)" />
+		<map name="Corner Top (3)"    unit="°C" src="TC(103)" />
+		<map name="Anchor Top (4)"    unit="°C" src="TC(104)" />
+		<map name="Center Top (5)"    unit="°C" src="TC(105)" />
+		<map name="Corner2 Top (6)"   unit="°C" src="TC(106)" />
+	</group>
+	<group name="Foundation 4, Column" from="2015/03/18 07:00">
+		<map name="Side, Away From Heating (7)" unit="°C" src="TC(107)" />
+		<map name="Center (8)"                  unit="°C" src="TC(108)" />
+		<map name="Side, Between Heating (9)"   unit="°C" src="TC(109)" />
+		<map name="Center, At Anchor (10)"      unit="°C" src="TC(110)" />
+		<map name="Side, Near Heating (11)"     unit="°C" src="TC(111)" />
+		<map name="Top, At Anchor (12)"         unit="°C" src="TC(112)" />
+		<map name="Top Corner (13)"             unit="°C" src="TC(113)" />
+	</group>	
+
+</measurements>

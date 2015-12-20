@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<measurements until-limit="inclusive">
+    <group name="Logger">
+        <map name="Battery Voltage" unit="V" src="V_batt" />        
+    </group>
+    <group name="Weather">
+        <map name="Air Temperature" unit="°C" src="T_air" />
+        <map name="Relative Humidity" unit="%" src="RH" />
+    </group>
+    <group name="Temperatures">
+        <map name="Temp 1" unit="°C" src="T(1)" />
+        <map name="Temp 2" unit="°C" src="T(2)" />
+        <map name="Temp 3" unit="°C" src="T(3)" />
+        <map name="Temp 4" unit="°C" src="T(4)" />
+    </group>
+</measurements>

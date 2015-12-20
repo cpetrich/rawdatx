@@ -1,0 +1,7 @@
+include *.rst LICENSE docs/Makefile docs/make.bat tests/*.py tests/*.xml tox.ini
+recursive-include tests/raw_data *.dat
+recursive-include docs *.rst
+recursive-include docs *.py
+recursive-include examples *.py
+prune docs/_build
+

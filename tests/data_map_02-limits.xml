@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This is a test configuration. Testing "exclusive"/"inclusive".
+     Expected hash of the result is: 2A2C0 -->
+<measurements name="a" from="2015/03/01 18:00" until="2015/03/07 09:00" until-limit="exclusive" >
+    <group name="Logger">
+        <map name="Battery Voltage" unit="V" src="V_batt" />        
+    </group>
+    <group name="Weather">
+        <map name="Air Temperature" unit="°C" src="T_air" />
+        <map name="Relative Humidity" unit="%" src="RH" />
+    </group>
+    <group name="Temperatures">
+        <map name="Temp 1" unit="°C" src="T(1)" />
+        <map name="Temp 2" unit="°C" src="T(2)" />
+        <map name="Temp 3" unit="°C" src="T(3)" />
+        <map name="Temp 4" unit="°C" src="T(4)" />
+        <map name="Temp 5" unit="°C" src="T(5)" />
+        <map name="Temp 6" unit="°C" src="T(6)" />
+        <map name="Temp 7" unit="°C" src="T(7)" />
+        <map name="Temp 8" unit="°C" src="T(8)" />
+    </group>
+</measurements>

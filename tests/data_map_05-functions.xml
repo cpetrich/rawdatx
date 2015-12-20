@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This is a test configuration. Expected
+     hash of the result is: 921F7 -->
+<measurements until-limit="inclusive">
+    <group name="Logger">
+        <map name="Battery Voltage" unit="V" src="V_batt" />        
+    </group>
+    <group name="Weather">
+        <map name="Air Temperature" unit="°C" src="T_air" />
+        <map name="Relative Humidity" unit="%" src="RH" />
+    </group>
+    <group name="Temperatures">
+        <map name="Temp 1" unit="°C" var="T1" src="T(1)" />
+        <map name="Temp 2" unit="°C" var="T2" src="T(2)" />
+        <map name="Temp 3" unit="°C" var="T3" src="T(3)" />
+        <map name="Temp 4" unit="°C" var="T4" src="T(4)" />
+        <map name="Temp 5" unit="°C" src="T(5)" />
+        <map name="Temp 6" unit="°C" src="T(6)" />
+        <map name="Temp 7" unit="°C" src="T(7)" />
+        <map name="Temp 8" unit="°C" src="T(8)" />
+    </group>
+    <group name="Functions">
+        <map name="Temp 1 v2" unit="°C" is="T1" />        
+        <map name="Avg 1-4" unit="°C" var="Tavg_C" is=".25*(T1+T2+T3+T4)" />
+        <map name="Offset" unit="°C" is="mean(Tavg_start_C)" />
+        <map name="Avg 1-4 less offset" unit="°C" is=".25*(T1+T2+T3+T4)-mean(Tavg_start_C)" />
+        <def unit="°F" var="Tavg_F" is="Tavg_C*9/5.+32" />
+        <map name="Avg" unit="°F" is="Tavg_F" />
+        <map name="Int test" is="2/3" />
+        <set until="2015/03/02">
+            <def var="Tavg_start_C" is=".25*(T1+T2+T3+T4)" />    
+        </set>
+    </group>
+</measurements>

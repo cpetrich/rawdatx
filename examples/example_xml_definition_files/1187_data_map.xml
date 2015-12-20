@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<measurements name="Taraldsvikfossen Reservoir" from="2015/09/01 00:00" until="" until-limit="exclusive">
+	<group name="">
+		<map name="Battery" unit="V" src="Batt_V_Min" />
+	</group>
+	<group name="Weather">
+		<map name="Air Temperature" unit="°C" src="AT_deg_C_Avg" />
+		<map name="Relative Humidity" unit="%" src="AH_pcnt_Avg" />		
+		<map name="Wind Speed" unit="m/s" src="WS_mps" />
+		<map name="Wind Direction" unit="Degrees" src="WD_deg" />		
+		<map name="Irradiance" unit="W/m²" is="SRC+1" src="SI_Wpm2_Avg" />
+                <map name="Precipitation, liquid, 5 min" unit="mm" src="PR_5_min_mm" />
+		<map name="Air Pressure" unit="hPa" src="AP_hPa_Avg" var="P_air_hPa" />
+	</group>
+	<group name="Water Pressure Sensor">
+	        <map name="Temperature" unit="°C" src="WT_deg_C_Avg" />
+	        <map name="Level" unit="cm" is="(SRC-13.5)*10" src="WP_kPa_Avg" />
+                <def name="Pressure" unit="kPa" var="P_water_kPa" is="SRC-13.5" src="WP_kPa_Avg" />
+	</group>
+	<group name="Preliminary Line Load">
+                <map name="Station B, cushioned" unit="kN/m" is="0.180*(pB1+pB2+pB3+pB4)" />
+		<map name="Station C, exposed" unit="kN/m" is="0.180*(pC1+pC2+pC3+pC4)" />
+		<map name="Station D, cushioned" unit="kN/m" is="0.180*(pD1+pD2+pD3+pD4)" />
+	</group>
+	<group name="Load Cell Pressure">
+		<map name="A" unit="kPa"  var="pA" is="remove_spikes( p_A(mean(p0_A))*1000 )" />
+		<map name="B1" unit="kPa" var="pB1" is="remove_spikes( p_B1(mean(p0_B1))*1000 )" />
+		<map name="B2" unit="kPa" var="pB2" is="remove_spikes( p_B2(mean(p0_B2))*1000 )" />
+		<map name="B3" unit="kPa" var="pB3" is="remove_spikes( p_B3(mean(p0_B3))*1000 )" />
+		<map name="B4" unit="kPa" var="pB4" is="remove_spikes( p_B4(mean(p0_B4))*1000 )" />
+		<map name="C1" unit="kPa" var="pC1" is="remove_spikes( p_C1(mean(p0_C1))*1000 )" />
+		<map name="C2" unit="kPa" var="pC2" is="remove_spikes( p_C2(mean(p0_C2))*1000 )" />
+		<map name="C3" unit="kPa" var="pC3" is="remove_spikes( p_C3(mean(p0_C3))*1000 )" />
+		<map name="C4" unit="kPa" var="pC4" is="remove_spikes( p_C4(mean(p0_C4))*1000 )" />
+		<map name="D1" unit="kPa" var="pD1" is="remove_spikes( p_D1(mean(p0_D1))*1000 )" />
+		<map name="D2" unit="kPa" var="pD2" is="remove_spikes( p_D2(mean(p0_D2))*1000 )" />
+		<map name="D3" unit="kPa" var="pD3" is="remove_spikes( p_D3(mean(p0_D3))*1000 )" />
+		<map name="D4" unit="kPa" var="pD4" is="remove_spikes( p_D4(mean(p0_D4))*1000 )" />
+		<map name="E" unit="kPa"  var="pE" is="remove_spikes( p_E(mean(p0_E))*1000 )" />		
+	</group>
+	<group name="Load Cell Temperature">
+		<map name="A" unit="°C" is="T_A" />
+		<map name="B1" unit="°C" is="T_B1" />
+		<map name="B2" unit="°C" is="T_B2" />
+		<map name="B3" unit="°C" is="T_B3" />
+		<map name="B4" unit="°C" is="T_B4" />
+		<map name="C1" unit="°C" is="T_C1" />
+		<map name="C2" unit="°C" is="T_C2" />
+		<map name="C3" unit="°C" is="T_C3" />
+		<map name="C4" unit="°C" is="T_C4" />
+		<map name="D1" unit="°C" is="T_D1" />
+		<map name="D2" unit="°C" is="T_D2" />
+		<map name="D3" unit="°C" is="T_D3" />
+		<map name="D4" unit="°C" is="T_D4" />
+		<map name="E" unit="°C" is="T_E" />
+	</group>
+    <group name="Temperature Profile (not calibrated)" from="2015/12/10 13:50" >
+        <!-- not calibrated, not even zero-point -->
+        <!-- zero-point is ice-air interface at the time of deployment (sensor 21) -->
+        <map name="1.0 m" unit="°C" src="Tow(31)"/>
+        <map name="0.9 m" unit="°C" src="Tow(30)"/>
+        <map name="0.8 m" unit="°C" src="Tow(29)"/>
+        <map name="0.7 m" unit="°C" src="Tow(28)"/>
+        <map name="0.6 m" unit="°C" src="Tow(27)"/>
+        <map name="0.5 m" unit="°C" src="Tow(26)"/>
+        <map name="0.4 m" unit="°C" src="Tow(25)"/>
+        <map name="0.3 m" unit="°C" src="Tow(24)"/>
+        <map name="0.2 m" unit="°C" src="Tow(23)"/>
+        <map name="0.1 m" unit="°C" src="Tow(22)"/>
+        <map name="0.0 m" unit="°C" src="Tow(21)"/>
+        <map name="-0.1 m" unit="°C" src="Tow(20)"/>
+        <map name="-0.2 m" unit="°C" src="Tow(19)"/>
+        <map name="-0.3 m" unit="°C" src="Tow(18)"/>
+        <map name="-0.4 m" unit="°C" src="Tow(17)"/>
+        <map name="-0.5 m" unit="°C" src="Tow(16)"/>
+        <map name="-0.6 m" unit="°C" src="Tow(15)"/>
+        <map name="-0.7 m" unit="°C" src="Tow(14)"/>
+        <map name="-0.8 m" unit="°C" src="Tow(13)"/>
+        <map name="-0.9 m" unit="°C" src="Tow(12)"/>
+        <map name="-1.0 m" unit="°C" src="Tow(11)"/>
+        <map name="-1.1 m" unit="°C" src="Tow(10)"/>
+        <map name="-1.2 m" unit="°C" src="Tow(9)"/>
+        <map name="-1.3 m" unit="°C" src="Tow(8)"/>
+        <map name="-1.4 m" unit="°C" src="Tow(7)"/>
+        <map name="-1.5 m" unit="°C" src="Tow(6)"/>
+        <map name="-1.6 m" unit="°C" src="Tow(5)"/>
+        <map name="-1.7 m" unit="°C" src="Tow(4)"/>
+        <map name="-1.8 m" unit="°C" src="Tow(3)"/>
+        <map name="-1.9 m" unit="°C" src="Tow(2)"/>
+        <map name="-2.0 m" unit="°C" src="Tow(1)"/>
+    </group>
+	<group name="Define Period for Pressure Zero-Calibration" from="2015/10/23 12:00" until="2015/10/23 18:00">
+		<!-- get raw pressure data only for the time period we want to average over -->
+		<!-- calibrate with reading during installation -->
+		<def var="p0_A" is="p_A(0)" />
+		<def var="p0_B1" is="p_B1(0)" />
+		<def var="p0_B2" is="p_B2(0)" />
+		<def var="p0_B3" is="p_B3(0)" />
+		<def var="p0_B4" is="p_B4(0)" />
+		<def var="p0_C1" is="p_C1(0)" />
+		<def var="p0_C2" is="p_C2(0)" />
+		<def var="p0_C3" is="p_C3(0)" />
+		<def var="p0_C4" is="p_C4(0)" />
+		<def var="p0_D1" is="p_D1(0)" />
+		<def var="p0_D2" is="p_D2(0)" />
+		<def var="p0_D3" is="p_D3(0)" />
+		<def var="p0_D4" is="p_D4(0)" />
+		<def var="p0_E" is="p_E(0)" />
+	</group>
+	<group name="Link Sensors to Calibration and Channel Number" from="2015/10/06 14:45" until="2016/05/31 10:00">
+		<!-- map sensor location to sensor ID and invalidate outside of from/until -->				
+		<def var="p_A(p0)" is="p_1334693(SRC,T_A,p0)" src="F_Hz(1)" />
+		<def var="T_A"     is="T_of_R(SRC)-T0_1334693" src="R_ohm(1)" />
+		<def var="p_B1(p0)" is="p_1241672(SRC,T_B1,p0)" src="F_Hz(2)" />
+		<def var="T_B1"     is="T_of_R(SRC)-T0_1241672" src="R_ohm(2)" />
+		<def var="p_B2(p0)" is="p_1241679(SRC,T_B2,p0)" src="F_Hz(3)" />
+		<def var="T_B2"     is="T_of_R(SRC)-T0_1241679" src="R_ohm(3)" />
+		<def var="p_B3(p0)" is="p_1241682(SRC,T_B3,p0)" src="F_Hz(4)" />
+		<def var="T_B3"     is="T_of_R(SRC)-T0_1241682" src="R_ohm(4)" />
+		<def var="p_B4(p0)" is="p_1241677(SRC,T_B4,p0)" src="F_Hz(5)" />
+		<def var="T_B4"     is="T_of_R(SRC)-T0_1241677" src="R_ohm(5)" />
+		<def var="p_C1(p0)" is="p_1241681(SRC,T_C1,p0)" src="F_Hz(6)" />
+		<def var="T_C1"     is="T_of_R(SRC)-T0_1241681" src="R_ohm(6)" />
+		<def var="p_C2(p0)" is="p_1241675(SRC,T_C2,p0)" src="F_Hz(7)" />
+		<def var="T_C2"     is="T_of_R(SRC)-T0_1241675" src="R_ohm(7)" />
+		<def var="p_C3(p0)" is="p_1241674(SRC,T_C3,p0)" src="F_Hz(8)" />
+		<def var="T_C3"     is="T_of_R(SRC)-T0_1241674" src="R_ohm(8)" />
+		<def var="p_C4(p0)" is="p_1241678(SRC,T_C4,p0)" src="F_Hz(9)" />
+		<def var="T_C4"     is="T_of_R(SRC)-T0_1241678" src="R_ohm(9)" />
+		<def var="p_D1(p0)" is="p_1241669(SRC,T_D1,p0)" src="F_Hz(10)" />
+		<def var="T_D1"     is="T_of_R(SRC)-T0_1241669" src="R_ohm(10)" />
+		<def var="p_D2(p0)" is="p_1241676(SRC,T_D2,p0)" src="F_Hz(11)" />
+		<def var="T_D2"     is="T_of_R(SRC)-T0_1241676" src="R_ohm(11)" />
+		<def var="p_D3(p0)" is="p_1241671(SRC,T_D3,p0)" src="F_Hz(12)" />
+		<def var="T_D3"     is="T_of_R(SRC)-T0_1241671" src="R_ohm(12)" />
+		<def var="p_D4(p0)" is="p_1241680(SRC,T_D4,p0)" src="F_Hz(13)" />
+		<def var="T_D4"     is="T_of_R(SRC)-T0_1241680" src="R_ohm(13)" />
+		<def var="p_E(p0)" is="p_1335673(SRC,T_E,p0)" src="F_Hz(14)" />
+		<def var="T_E"     is="T_of_R(SRC)-T0_1335673" src="R_ohm(14)" />
+	</group>
+	<group name="Calibration Functions and Constants">
+		<!-- this group is valid for all years -->
+		<def var="T_of_R(R)" is="-273.2+1./(1.4051e-3+2.369e-4*ln(R)+1.019e-7*(ln(R))**3)" />
+        <!-- note: temperature compensation (K*T) disabled by multiplying with 0 -->
+		<def unit="MPa" var="p_cal(A,B,K,f,T,p0)" is="A*1e-6*f**4 + B*1e-3*f**2 + 0* K*T -p0 -P_air_hPa/10000." />
+		<!-- GeoKon coefficients -->
+		<def var="p_1241668(f,T,p0)" is="p_cal(-1.393e-09,-2.713e-04, 9.372e-05, f,T,p0)" />
+		<def var="p_1241669(f,T,p0)" is="p_cal(-1.329e-09,-2.713e-04, 7.492e-05, f,T,p0)" />
+		<def var="p_1241670(f,T,p0)" is="p_cal(-1.259e-09,-2.751e-04, 1.225e-04, f,T,p0)" />
+		<def var="p_1241671(f,T,p0)" is="p_cal(-1.338e-09,-2.674e-04, 7.796e-05, f,T,p0)" />
+		<def var="p_1241672(f,T,p0)" is="p_cal(-1.116e-09,-2.791e-04, 5.966e-05, f,T,p0)" />
+		<def var="p_1241673(f,T,p0)" is="p_cal(-1.300e-09,-2.693e-04, 3.769e-05, f,T,p0)" />
+		<def var="p_1241674(f,T,p0)" is="p_cal(-1.421e-09,-2.721e-04, 4.006e-05, f,T,p0)" />
+		<def var="p_1241675(f,T,p0)" is="p_cal(-1.240e-09,-2.810e-04, 1.153e-04, f,T,p0)" />
+		<def var="p_1241676(f,T,p0)" is="p_cal(-1.415e-09,-2.679e-04, 9.977e-05, f,T,p0)" />
+		<def var="p_1241677(f,T,p0)" is="p_cal(-1.064e-09,-2.840e-04, 1.124e-04, f,T,p0)" />
+		<def var="p_1241678(f,T,p0)" is="p_cal(-1.302e-09,-2.622e-04, 7.428e-05, f,T,p0)" />
+		<def var="p_1241679(f,T,p0)" is="p_cal(-1.425e-09,-2.754e-04, 5.627e-05, f,T,p0)" />
+		<def var="p_1241680(f,T,p0)" is="p_cal(-1.348e-09,-2.763e-04, 1.484e-04, f,T,p0)" />
+		<def var="p_1241681(f,T,p0)" is="p_cal(-1.310e-09,-2.743e-04, 1.062e-04, f,T,p0)" />
+		<def var="p_1241682(f,T,p0)" is="p_cal(-1.083e-09,-2.816e-04, 9.956e-05, f,T,p0)" />
+		<def var="p_1241683(f,T,p0)" is="p_cal(-8.471e-10,-2.858e-04, 7.066e-05, f,T,p0)" />
+		<def var="p_1334693(f,T,p0)" is="p_cal(-1.215e-09,-2.837e-04,-2.642e-05, f,T,p0)" />
+		<def var="p_1334694(f,T,p0)" is="p_cal(-1.273e-09,-2.843e-04, 3.765e-05, f,T,p0)" />
+		<def var="p_1335668(f,T,p0)" is="p_cal(-1.165e-09,-2.592e-04, 4.717e-06, f,T,p0)" />
+		<def var="p_1335669(f,T,p0)" is="p_cal(-1.112e-09,-2.870e-04,-5.622e-05, f,T,p0)" />
+		<def var="p_1335670(f,T,p0)" is="p_cal(-1.223e-09,-2.724e-04, 3.441e-05, f,T,p0)" />
+		<def var="p_1335671(f,T,p0)" is="p_cal(-1.345e-09,-2.857e-04,-4.978e-06, f,T,p0)" />
+		<def var="p_1335672(f,T,p0)" is="p_cal(-8.712e-10,-2.801e-04, 5.868e-05, f,T,p0)" />
+		<def var="p_1335673(f,T,p0)" is="p_cal(-1.305e-09,-2.878e-04, 2.110e-05, f,T,p0)" />
+		<def var="p_1335674(f,T,p0)" is="p_cal(-1.261e-09,-2.839e-04, 2.384e-05, f,T,p0)" />
+		<def var="p_1335675(f,T,p0)" is="p_cal(-1.157e-09,-2.760e-04,-3.322e-06, f,T,p0)" />
+		<def var="p_1335676(f,T,p0)" is="p_cal(-9.204e-10,-2.578e-04,-8.818e-05, f,T,p0)" />
+		<def var="p_1335677(f,T,p0)" is="p_cal(-1.349e-09,-2.815e-04,-6.176e-05, f,T,p0)" />
+		<def var="p_1335678(f,T,p0)" is="p_cal(-1.017e-09,-2.978e-04,-2.899e-05, f,T,p0)" />
+		<def var="p_1335679(f,T,p0)" is="p_cal(-1.336e-09,-2.648e-04,-4.749e-06, f,T,p0)" />
+		<def var="p_1335680(f,T,p0)" is="p_cal(-1.200e-09,-2.694e-04, 1.875e-05, f,T,p0)" />
+		<def var="p_1335681(f,T,p0)" is="p_cal(-1.209e-09,-2.891e-04, 7.633e-05, f,T,p0)" />
+		<!-- T offset: actual reading at nominally 0C -->
+		<def var="T0_1241668" is="-0.595652" />
+		<def var="T0_1241676" is="-0.545987" />
+		<def var="T0_1241671" is="-0.384232" />
+		<def var="T0_1241669" is="-0.412995" />
+		<def var="T0_1241677" is="-0.657307" />
+		<def var="T0_1241672" is="-0.454733" />
+		<def var="T0_1241682" is="-0.473716" />
+		<def var="T0_1241679" is="-0.628657" />
+		<def var="T0_1241678" is="-0.489327" />
+		<def var="T0_1241683" is="-0.602988" />
+		<def var="T0_1241675" is="-0.575686" />
+		<def var="T0_1241674" is="-0.484835" />
+		<def var="T0_1241670" is="-0.620654" />
+		<def var="T0_1335668" is="-0.593167" />
+		<def var="T0_1335676" is="-0.515438" />
+		<def var="T0_1335670" is="-0.452923" />
+		<def var="T0_1335672" is="-0.567406" />
+		<def var="T0_1241680" is="-0.582914" />
+		<def var="T0_1334694" is="-0.294147" />
+		<def var="T0_1335680" is="-0.421622" />
+		<def var="T0_1335669" is="-0.380636" />
+		<def var="T0_1241673" is="-0.668444" />
+		<def var="T0_1335681" is="-0.48503" />
+		<def var="T0_1335679" is="-0.487726" />
+		<def var="T0_1335678" is="-0.605296" />
+		<def var="T0_1335675" is="-0.54221" />
+		<def var="T0_1335677" is="-0.540341" />
+		<def var="T0_1335674" is="-0.547233" />
+		<def var="T0_1335671" is="-0.526627" />
+		<def var="T0_1335673" is="-0.331043" />
+		<def var="T0_1241681" is="-0.70301" />
+		<def var="T0_1334693" is="-0.475807" />
+	</group>
+	<group name="Raw Data">
+		<!-- keep these in the raw data sheet without processing them -->
+		<def var="dummy" src="SD_1_cm" />				
+		<def var="dummy" src="PR_acc_mm" />
+        <def var="dummy" src="Panel_T_Avg" />
+	</group>
+</measurements>
