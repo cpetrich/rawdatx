@@ -11,7 +11,7 @@ in a single XML Definition File that also serves as documentation.
 Installation
 ------------
 
-Make sure the following is installed:
+The following prerequisites need to be installed:
 
 * Python 2.7, 3.4, or 3.5
 * numpy 1.9 or higher
@@ -22,16 +22,19 @@ optionally (recommended):
 * lxml
 * asteval
 
-Then install rawdatx with:
-
+The easiest way to install rawdatx is through pip:
 ``pip install rawdatx``
+
+Alternatively, download the latest version from the repository
+`<https://github.com/cpetrich/rawdatx>`_ and install with
+``python setup.py install``.
 
 Usage
 -----
 
 To convert a TOA5 file to XLSX, run the following script::
 
-    import rawdatx.read_TOA5 as read_TOA5
+    import rawdatx.read_TOA5 as read_raw_data
     import rawdatx.process_XML as process_XML
     
     config = './config.cfg'
@@ -84,6 +87,8 @@ The XML Definition File (``data_map.xml``) may look like this:
         </group>
     </measurements>
 
+See also examples and test files in the repository at
+`<https://github.com/cpetrich/rawdatx>`_.
 
 Background
 ==========
