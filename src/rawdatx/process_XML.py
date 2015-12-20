@@ -169,66 +169,6 @@ XML_date_formats = ['%Y/%m/%d %H:%M:%S',
                     '%Y%m%dT%H%M%S',
                     '%Y%m%d']
 
-# in general, a statement is constructed and evaluated:
-#   def <var>: return <is>
-
-# 1. identify/select <MEASUREMENT> to process
-# 1a. make sure there are no <MAP> tags under <MEASUREMENT> (<DEF> is ok)
-# 2. make list of <GROUP> elements
-# 2a. make list of <GROUP> elements that contain at least one <MAP> element (for XLSX)
-# (optional) 2b. check that names of groups are unique in list of 2a and legal.
-# 3. walk through <MEASUREMENT> and <GROUP> elements to find all <MAP> and <DEF> elements
-# 3a.  extract var/src pairs and keep in list. do not add to dictionary
-# 3b.  extract var/is pairs and evaluate 'def' statement (check for var name space collisions)
-#        account for from/until by extracting from/until range and adding decorators (decorators should test for scalar: in this case, no from/until adjustment should be performed)
-# 4. find master_date vector from var/src list
-# 4a. reformat according to date and enter into dictionary var/src definitions (check var for name space collisions)
-#       account for from/until at this stage
-
-# decorate every function defined by var/is so as to invalidate (NAN) all
-#  data outside the date range defined by 'from' and 'until'
-# overwrite np.mean by np.nanmean etc. in dictionary
-
-
-# 1. write header
-# 2. write dates
-# 3. go through list of <GROUP> elements that contain at least one <MAP> element
-# 4.   draw group header
-# 5.   go through <MAP> elements
-# 6.   get from/until limits and store in (global) variables that are used by function decorators
-# 7.      evaluate 'is' statement (optionally, assign result to 'var' since 'var' is not a function definition, 3b. in init phase)
-# 8.      write column to XML file and store data in npy data structure
-
-
-# NOTE: a calculated value/variable is masked by from/until
-#       after it has been calculated. Hence, no masking is performed for scalars.
-#       Hence, calculating the average over a certain period is a two step
-#         process:
-#       <def from="" until="" var="data_to_be_averaged" src/is="data" />
-#       <def var="averaged_data" is="mean(data_to_be_averaged)" />
-
-
-# Expressions in name space:
-# Variables defined:
-# pi, e
-# Functions needed (decorated)
-#  vector->vector or scalar->scalar
-# + - * / ** > < !=
-# ln() log10() exp()
-# fabs() abs()   [both actually executing fabs()]
-# sign()
-# where()    [can be used to replace NAN]  # DOES NOT SEEM TO WORK
-# sin() cos() tan()
-# arctan()  arctan2()
-# TODO: some kind of running average filter
-#  vector->scalar (or scalar->scalar)
-# mean()  [ignore NAN]
-# min(), max() [ignore NAN]
-# sum()   [ignore NAN]
-# len()   [ignore NAN]
-#  scalar->vector (or vector->vector)
-# vector()    [turns scalar into vector of length master_dates (multiply by ones(master_dates.shape) )]
-
 
 def find_datetime_idx(dt, db, check_until=False):
     #if dt in db: return db[dt] # until 12 June 2015
@@ -259,29 +199,8 @@ def find_datetime_idx(dt, db, check_until=False):
                              (XML_attr_until, XML_attr_except_until, XML_attr_until_mode, XML_attr_until_mode,
                               global_until_mode,
                               XML_flag_until_inclusive,XML_flag_until_exclusive,XML_flag_until_disallowed))        
-
-    if False:
-        # version until 12 June 2015
-        # this is actually incompatible with the way _mask_values_with_date_index()
-        #  was written.
-        or_earlier = check_until
-        if or_earlier:
-            # UNTIL: we return the last index BEFORE the requested end
-            # what entry would be earlier?        
-            ok = np.nonzero(dbk<dt)[0]
-            try:
-                return db[dbk[np.max(ok)]]
-            except:
-                return -1 # -1 indicates that date is before dataset start
-        else:
-            # FROM: we return the first index AFTER the requested time
-            # what entry would be later?
-            ok = np.nonzero(dbk>dt)[0]
-            try:
-                return db[dbk[np.min(ok)]]
-            except:
-                return -1 # -1 indicates that date is after dataset end
-    else:
+    
+    if True:
         # version of 13 June 2015
         or_earlier = check_until
         if or_earlier:            
@@ -349,17 +268,8 @@ def _mask_values_with_date_index(values, from_idx=None, until_idx=None, no_copy=
         #if until_idx > 0: # until 12 June 2015
         if (until_idx is not None) and (until_idx >= 0): # from 13 June 2015
             values[until_idx:] = np.nan
-    else:
-        if False:
-            # Version until 12 June 2015
-            # mask inside given range
-            if ((from_idx is not None) and (from_idx == -1)) or (until_idx is None):
-                from_idx = 0 # start from before dataset starts
-            if ((until_idx is not None) and (until_idx == -1)) or (until_idx is None):
-                until_idx = len(values) # end after dataset ends
-
-            values[from_idx:until_idx] = np.nan
-        else:
+    else:        
+        if True:
             # Version from 13 June 2015
             if (from_idx is not None) and (from_idx==-1):
                 # we blank out an iterval after the end of the dataset
@@ -785,7 +695,7 @@ def make_environment(measurements,env=None):
 
     for element in elements:
         var = _get_attrib_or_None(element,XML_attr_var)
-        #if var == None: continue # there's nothing defined by this tag
+
         if var is None:
             # 21 Mar 2015: we define a (unique) variable ALWAYS
             var = _make_global_var_name(element)
@@ -797,10 +707,6 @@ def make_environment(measurements,env=None):
         if (src is None) and (expr is None):
             raise ValueError('Neither %s nor %s defined for %s="%s".' %
                              (XML_attr_src,XML_attr_expr,XML_attr_var,real_var))
-        #if (src!=None) and (expr!=None):
-        #    # 21 Mar 2015: we allow this now. see _make_expression()
-        #    raise ValueError('Both %s and %s are defined for %s="%s".' %
-        #                     (XML_attr_src,XML_attr_expr,XML_attr_var,real_var))
         
         expr0 = expr
         real_var0 = real_var
@@ -1005,15 +911,6 @@ def get_all_mapped_dates(data, root):
 # XLSX creation
 
 def make_header(sheet, datetime_string=None):
-#    info=[
-#        ["Project:","Winter Construction of Rock Foundations"],
-#        ["Web Page:","http://ndat.no/, http://bm180.blogspot.no/"],
-#        ["File Content:","Data acquired at site of mast foundation BM180, Lavangen"],
-#        ["Owner:","Norut Narvik"],
-#        ["Contact:","christian.petrich@norut.no"],
-#        ["File Time, UTC:", datetime.datetime.today().strftime('%Y/%m/%d %H:%M')],
-#        ["Comment:","Data are provided as-is without warranty of fitness for a particular pupose. Data in this spreadsheet are preliminary and not quality controlled. Contact Norut Narvik prior to use."],
-#        ]
 
     if datetime_string is None: datetime_string = datetime.datetime.today().strftime('%Y/%m/%d %H:%M')
     info = metadata_header
@@ -1033,10 +930,6 @@ def _write_dates(sheet, row0, all_dates):
     for row in xrange(len(all_dates)):
         sheet['A%i' % (row+row0)] = all_dates[row]        
         sheet['A%i' % (row+row0)].number_format = number_format
-
-# since OpenPyXL version 2.2.0 style assignments to cells are depreciated, so this
-#  is a work-around, copying that functionality (this program was developed
-#  before 2.2.0)
 
 def cell_apply_style(cell, style):    
     for key in style.__dict__:
@@ -1089,7 +982,7 @@ def write_all(workbook,sheet, row0, groups, all_dates, data):
 
     if True:        
         # Time column
-        #logger_time_unit = 'UTC+1' # should be defined in configuration file
+        #logger_time_unit should be defined in configuration file
         sheet.write(row_name,date_col,'Time',s_header)
         if row_units is not None:
             sheet.write(row_units,date_col,logger_time_unit,s_unit)
@@ -1132,7 +1025,6 @@ def write_all(workbook,sheet, row0, groups, all_dates, data):
             if row_units is not None:
                 sheet.write(row_units,col,u_name,s_unit if idx>0 else s_unit1)
                 
-        #out_values = np.nan*np.ones(all_dates.shape)        
         # write data of this group
         for idx in xrange(len(maps)):
             element = maps[idx]
@@ -1182,8 +1074,7 @@ def write_all(workbook,sheet, row0, groups, all_dates, data):
     return structure        
 
 def extract_MAPs_in_order(group):
-    """get all MAP elements, including those in nested SET elements"""
-    #return group.findall('./'+XML_map) # does not find nested elements
+    """get all MAP elements, including those in nested SET elements"""    
 
     # flatten the group and inspect all elements separately
     children=group.getiterator()
@@ -1583,6 +1474,7 @@ def main(config_file, file_time_string=None):
 #  test
 
 def _test_detrend():
+    # this is a unit test function
     try: import scipy.signal as ss
     except: ss=None
     if ss is None:
