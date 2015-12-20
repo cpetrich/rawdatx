@@ -2,7 +2,7 @@ rawdatx
 #######
 
 rawdatx is a Python 2.7, 3.4, 3.5 converter that generates Excel xlsx files
-from for Campbell Scientific TOA5 data logger files produced by LoggerNet.
+from TOA5 comma-separated text files produced by Campbell Scientific LoggerNet.
 Sensor input, processing instructions, and output structure are specified
 in a single XML Definition File that also serves as documentation.
 
