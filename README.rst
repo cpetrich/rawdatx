@@ -29,7 +29,7 @@ Usage
 
 To convert a TOA5 file to XLSX, run the following script::
 
-    import rawdatx.read_TOA5 as read_TOA5
+    import rawdatx.read_TOA5 as read_raw_data
     import rawdatx.process_XML as process_XML
     
     config = './config.cfg'
