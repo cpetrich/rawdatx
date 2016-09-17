@@ -4,5 +4,5 @@ python:
   - "3.4"
   - "3.5"
   - "nightly"
-install: pip install tox-travis
+install: pip install tox-travis, numpy, xlsxwriter
 script: tox
