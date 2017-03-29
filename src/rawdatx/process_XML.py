@@ -60,8 +60,9 @@ except ImportError:
 
 # this is the interpreter revision
 #  we change this when the XML syntax changes
-REVISION='20150613'
+REVISION='20170329'
 
+# 29 Mar 2017: fixed units in npy file
 # 20 Dec 2015: write mock-asteval class to allow script to run on
 #              Python 3.5
 #              (there is some unresolved incompatibility in asteval 0.9.5)
@@ -1030,6 +1031,8 @@ def write_all(workbook,sheet, row0, groups, all_dates, data):
             element = maps[idx]
             name = _get_attrib_or_None(element, XML_attr_name)
             if name is None: name = ''
+            u_name = _get_attrib_or_None(element, XML_attr_unit)
+            if u_name is None: u_name = ''
             col = col_group+idx
 
             # get function returing this variable possibly by
