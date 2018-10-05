@@ -62,6 +62,7 @@ except ImportError:
 #  we change this when the XML syntax changes
 REVISION='20170329'
 
+#  5 Oct 2018: interpolate columns without valid data
 # 29 Mar 2017: fixed units in npy file
 # 20 Dec 2015: write mock-asteval class to allow script to run on
 #              Python 3.5
