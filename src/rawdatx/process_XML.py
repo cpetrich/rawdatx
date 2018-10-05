@@ -359,6 +359,8 @@ def _nan_helper(y):
     return np.isnan(y), lambda z: z.nonzero()[0]
 
 def interpolate_over_NaN(data):
+    if len(data[data==data]) == 0: # all NaN
+        return data.copy()
     data_out=data.copy()    
     nans, x= _nan_helper(data_out)    
     data_out[nans]= np.interp(x(nans), x(~nans), data_out[~nans])
