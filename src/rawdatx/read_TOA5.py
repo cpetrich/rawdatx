@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import datetime
 import numpy as np
@@ -7,7 +7,8 @@ except ImportError: import configparser # Python 3
 import sys, glob, os
 try: dummy = xrange(3) # Python 2
 except NameError: xrange=range # Python 3
-    
+
+# 25 Dec 2018: allow for string data
 # 19 Dec 2015: remove use of deepcopy() on dictionary to make this work
 #              with currently incomplete implementation of pypy's numpy.
 #              regardless, np.save() does not work with datetime objects under
@@ -30,10 +31,10 @@ def main(config_file):
         return string
 
     if True:
-        CFG_raw_path='RawData' 
+        CFG_raw_path='RawData'
         path_in = cfg_get_string(config,CFG_raw_path,'raw_data_path')
         logger_time_zone = cfg_get_string(config,CFG_raw_path,'logger_time_zone')
-        
+
         fns_in = []
         # get file entries by mask, e.g.
         #   mask = *.dat
@@ -64,7 +65,7 @@ def main(config_file):
 
         # skip metadata
         for times in xrange(skip_before):
-            file_content.pop(0) 
+            file_content.pop(0)
 
         # extract column names
         if header_quoted:
@@ -74,7 +75,7 @@ def main(config_file):
             header_keys[-1]=header_keys[-1][:-1] # remove trailing "
         else:
             # plain header titles delimited by ,
-            header_keys = file_content.pop(0).strip().split(delimiter)    
+            header_keys = file_content.pop(0).strip().split(delimiter)
 
         # skip metadata
         for times in xrange(skip_after):
@@ -89,7 +90,7 @@ def main(config_file):
         # start_date is inclusive while end_date is exclusive
 
         file_content, header_keys = content
-        
+
         # hard-coded name of time stamp column (usually column 0)
         dates_name = 'TIMESTAMP'
         values_name = value_names
@@ -97,12 +98,12 @@ def main(config_file):
             type_name = ['float'] * len(values_name)
         else:
             type_name = value_types
-            
+
         # start with empty dictionary
         data = {}
-            
+
         if True:
-            # find column index of values        
+            # find column index of values
             dates_idx = header_keys.index(dates_name)
             values_idx = []
             for name in values_name:
@@ -110,20 +111,20 @@ def main(config_file):
 
 
             while len(file_content)>0:
-                line = file_content.pop(0)        
+                line = file_content.pop(0)
                 val = line.strip().split(",") # assuming that no string contains a comma
 
                 if val[dates_idx][0]=='"': # date is quoted, remove quotes
                     val[dates_idx]=val[dates_idx][1:-1]
                 this_date = datetime.datetime.strptime(val[dates_idx],'%Y-%m-%d %H:%M:%S')
-                
+
                 # is time out of bounds ?
                 if (start_date != None) and (this_date < start_date): continue
                 if (end_date != None) and (this_date >= end_date): continue
 
-                for idx in xrange(len(values_idx)):                
-                    value_str = val[values_idx[idx]]                
-                    if type_name[idx].lower() == 'float':                    
+                for idx in xrange(len(values_idx)):
+                    value_str = val[values_idx[idx]]
+                    if type_name[idx].lower() == 'float':
                         try:
                             value = float(value_str) # also converts NAN, INF, and -INF
                             if np.fabs(value)>1e15: value = np.nan # some malfunctioning sensor
@@ -135,10 +136,12 @@ def main(config_file):
                             elif 'INF' in value_str.upper():
                                 value = np.inf
                                 value = np.nan   # turn INF to NAN
+                            elif value_str.startswith('"') and value_str.endswith('"'):
+                                value = value_str[1:-1] # copy string, even though we expect a float
                             else:
                                 raise ValueError('cannot interpret value %s as %s' % (
                                     value_str, type_name[idx]))
-                    elif type_name[idx].lower() == 'int':                    
+                    elif type_name[idx].lower() == 'int':
                         value = int(value_str)
                         # not sure how to deal with NAN and INF for int
                     else:
@@ -152,12 +155,12 @@ def main(config_file):
                             'dates':[this_date],
                             'values':[value],
                             'time zone': logger_time_zone}
-                        
-            # convert lists to arrays        
+
+            # convert lists to arrays
             for idx in xrange(len(values_idx)):
                 for key in ('dates','values'):
                     data[values_name[idx]][key]=np.array(data[values_name[idx]][key])
-                    
+
         # return dictionaly of results
         return data
 
@@ -175,16 +178,16 @@ def main(config_file):
     def get_CS_entries_as_dict(filename, value_names, value_types=None,
                             start_date=None,end_date=None):
         """Convenience function for CR1000 data logger files"""
-        
+
         # read file content
         file_content, header_keys = get_CS_file_content(filename)
-        
+
         # extract value
         if value_names == None:
             value_names = header_keys[:]
             try: value_names.remove('TIMESTAMP')
             except: pass
-            
+
         return (extract_values((file_content, header_keys),
                                value_names, value_types,
                                start_date,end_date),
@@ -201,7 +204,7 @@ def main(config_file):
         new_data, new_header_keys = get_CS_entries_as_dict(fn,None)
         header_keys+=new_header_keys
         if data is None: data = new_data
-        else:                
+        else:
             for variable in new_data:
                 if variable not in data:
                     # not yet seen: create
@@ -219,8 +222,8 @@ def main(config_file):
 
     # now make sure all variable arrays are sorted by time
     # TODO: deal with double entries(?)
-    for variable in data.keys():        
-        
+    for variable in data.keys():
+
         if True:
             # the obvious way, for recent versions of numpy
             dates_to_sort = data[variable]['dates']
@@ -229,7 +232,7 @@ def main(config_file):
             t_ref = datetime.datetime(1900,1,1)
             dates_to_sort = [(t-t_ref).total_seconds() for t in data[variable]['dates']]
         idx=np.argsort(dates_to_sort)
-        
+
         for key in ('dates','values'):
             data[variable][key]=data[variable][key][idx]
     # as per 13 June 2015, keep track of the order of header entries encountered
@@ -244,11 +247,10 @@ def main(config_file):
 
 
 if __name__=='__main__':
-    
+
     config_file = './config.cfg'
 
     if len(sys.argv) == 2:
         config_file = sys.argv[1]
 
     main(config_file)
-    
