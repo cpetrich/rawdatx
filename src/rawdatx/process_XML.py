@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from __future__ import division # used for function evaluator
 
 import xlsxwriter
@@ -27,17 +27,17 @@ except ImportError:
     # Note: this class and ASTEVAL produce the same results in Python 2
     #   only if this script uses
     #   from __future__ import division
-    
+
     class Interpreter(object):
         def __init__(self, **kwargs):
             self.symtable={}
             self.error=[]
             # define attribute to distinguish this class from asteval
-            self.unsafe_evaluation_environment = True            
+            self.unsafe_evaluation_environment = True
         def __call__(self, source):
             self.symtable['__builtins__']=None
             return eval(source.replace('\r\n','\n'), self.symtable)
-        def add(self, source):            
+        def add(self, source):
             exec(source.replace('\r\n','\n'), self.symtable)
 
 # note: xml.etree.ElementTree does not allow access to parent. use lxml instead
@@ -51,7 +51,8 @@ try:
     _using.append('lxml')
 except ImportError:
     _using.append('no lxml')
-    from ._xml_parser import DTD, parse  # minimal implementation -- does not validate DTD
+#    from ._xml_parser import DTD, parse  # minimal implementation -- does not validate DTD
+    from _xml_parser import DTD, parse  # minimal implementation -- does not validate DTD
     import xml
     def ET_tostring(root, encoding, pretty_print):
         return tree._text
@@ -60,9 +61,9 @@ except ImportError:
 
 # this is the interpreter revision
 #  we change this when the XML syntax changes
-REVISION='20170329'
+REVISION='20181225'
 
-#  5 Oct 2018: interpolate columns without valid data
+# 25 Dec 2018: allow string fields (numpy.str_)
 # 29 Mar 2017: fixed units in npy file
 # 20 Dec 2015: write mock-asteval class to allow script to run on
 #              Python 3.5
@@ -174,7 +175,7 @@ XML_date_formats = ['%Y/%m/%d %H:%M:%S',
 
 def find_datetime_idx(dt, db, check_until=False):
     #if dt in db: return db[dt] # until 12 June 2015
-    
+
     if not check_until: # since 13 June 2013
         # shortcut only if we are looking for FROM
         if dt in db: return db[dt]
@@ -182,8 +183,8 @@ def find_datetime_idx(dt, db, check_until=False):
         # shortcut only if we are looking for UNTIL and mode is
         #  exclusive
         if dt in db: return db[dt]
-        
-    
+
+
     dbk = list(db.keys())
     dbk.sort()
     dbk=np.array(dbk)
@@ -200,12 +201,12 @@ def find_datetime_idx(dt, db, check_until=False):
                               'Legal values for "%s" are: "%s", "%s", "%s" (default).') %
                              (XML_attr_until, XML_attr_except_until, XML_attr_until_mode, XML_attr_until_mode,
                               global_until_mode,
-                              XML_flag_until_inclusive,XML_flag_until_exclusive,XML_flag_until_disallowed))        
-    
+                              XML_flag_until_inclusive,XML_flag_until_exclusive,XML_flag_until_disallowed))
+
     if True:
         # version of 13 June 2015
         or_earlier = check_until
-        if or_earlier:            
+        if or_earlier:
             if until_is_inclusive:
                 # UNTIL: we return the first index AFTER the requested end
                 # --> until will be INCLUSIVE
@@ -228,31 +229,35 @@ def find_datetime_idx(dt, db, check_until=False):
                 return db[dbk[np.min(ok)]]
             except:
                 return -1 # -1 indicates that date is after dataset end
-        
-        
+
+
 
 ###################################################################
 # numerical environment
 
-def _mask_values_with_datetime(values, from_datetime=None, until_datetime=None):    
+def _mask_values_with_datetime(values, from_datetime=None, until_datetime=None):
     from_idx, until_idx = _get_idx_range_from_datetime(from_datetime, until_datetime)
     values = _mask_values_with_date_index(values,from_idx,until_idx)
     return values
 
 def _mask_values_with_except_date_index(values, from_idx=None, until_idx=None, no_copy=False):
     return _mask_values_with_date_index(values, from_idx, until_idx, no_copy=no_copy, mask_inside=True)
-            
+
 def _mask_values_with_date_index(values, from_idx=None, until_idx=None, no_copy=False, mask_inside=False):
     if not no_copy: values = np.array(values).copy() # useful to skip if we call this function repeatedly
-        
+
     if np.sum(values.flatten().shape) != len(datetime_idx_db):
         if np.sum(values.flatten().shape) != 1:
             raise ValueError('Unexpected size of input values. Expect scalar or properly sized vector.')
         # we're dealing with a scalar
         values = np.repeat(values, len(datetime_idx_db))
     # use make float() for NaN
-    values = values.astype(np.float64) # was: float
-    
+    if len(values) > 0 and isinstance(values[0],str):
+        NAN = ''
+    else:
+        values = values.astype(np.float64) # was: float
+        NAN = np.nan
+
     # NB: in Python 2, None > 0 evaluates to False.
     #     in Python 3, None > 0 raises TypeError exception.
     if not mask_inside:
@@ -262,15 +267,15 @@ def _mask_values_with_date_index(values, from_idx=None, until_idx=None, no_copy=
         #    values[:]= np.nan
         if (from_idx is not None) and (from_idx == -1): # from 13 June 2015
             # from a date in future
-            values[:]= np.nan
-    
+            values[:]= NAN
+
         if (from_idx is not None) and (from_idx >= 0):
             # if from_idx <= 0 we don't have to blank out anything (13 June 2015)
-            values[:from_idx] = np.nan # until 12 June 2015            
+            values[:from_idx] = NAN # until 12 June 2015
         #if until_idx > 0: # until 12 June 2015
         if (until_idx is not None) and (until_idx >= 0): # from 13 June 2015
-            values[until_idx:] = np.nan
-    else:        
+            values[until_idx:] = NAN
+    else:
         if True:
             # Version from 13 June 2015
             if (from_idx is not None) and (from_idx==-1):
@@ -281,14 +286,13 @@ def _mask_values_with_date_index(values, from_idx=None, until_idx=None, no_copy=
                 if from_idx is None: from_idx = 0 # start of record
                 if (until_idx==-1) or (until_idx is None):
                     until_idx = len(values) # end after dataset
-                
-                values[from_idx:until_idx] = np.nan
+
+                values[from_idx:until_idx] = NAN
 
     if values is None: raise ValueError('Unexpected result: None.')
     if len(values) != len(datetime_idx_db):
         raise ValueError('result vector wrong length in apply_datetime_mask()')
-    
-    
+
     return values
 
 def _get_idx_range_from_datetime(from_datetime=None, until_datetime=None):
@@ -299,7 +303,7 @@ def _get_idx_range_from_datetime(from_datetime=None, until_datetime=None):
         until_idx = find_datetime_idx(until_datetime,datetime_idx_db,True)
     else: until_idx = None
     return from_idx, until_idx
-    
+
 def apply_datetime_mask(function, from_datetime=None, until_datetime=None,
                         except_from_datetime_list=None,
                         except_until_datetime_list=None):
@@ -307,14 +311,14 @@ def apply_datetime_mask(function, from_datetime=None, until_datetime=None,
     if except_from_datetime_list is None: except_from_datetime_list = []
     if except_until_datetime_list is None: except_until_datetime_list = []
     from_idx, until_idx = _get_idx_range_from_datetime(from_datetime, until_datetime)
-    
-    except_ranges_idx = [_get_idx_range_from_datetime(f,u) for (f,u) in zip(except_from_datetime_list, except_until_datetime_list)]   
-    
+
+    except_ranges_idx = [_get_idx_range_from_datetime(f,u) for (f,u) in zip(except_from_datetime_list, except_until_datetime_list)]
+
     #@functools.wraps(function)  # does not work with asteval
     def wrapper(*args, **kwargs):
         return_value = function(*args, **kwargs)
         # turn scalars into vectors and apply time mask
-        return_value = _mask_values_with_date_index(return_value,from_idx,until_idx)        
+        return_value = _mask_values_with_date_index(return_value,from_idx,until_idx)
         for (efrom_idx, euntil_idx) in except_ranges_idx:
             return_value = _mask_values_with_except_date_index(return_value,efrom_idx,euntil_idx,no_copy=True)
         return return_value
@@ -325,18 +329,25 @@ def make_data_vector(key):
     # keep all keys in a list in the order in which they are called
     if key not in make_data_vector_log: make_data_vector_log.append(key)
     dates=data[key]['dates']
-    values=data[key]['values']    
-    out = np.nan*np.ones((len(datetime_idx_db),))
-    for idx,date in enumerate(dates):        
+    values=data[key]['values']
+    if len(values)>0 and isinstance(values[0],np.str_):
+        # allow strings. Not sure if this works in Py2.7
+        #out = np.array(['']*len(datetime_idx_db))
+        out = np.array([None]*len(datetime_idx_db)) # use 'object' so string length is not truncated
+        is_string = True
+    else:
+        out = np.nan*np.ones((len(datetime_idx_db),))
+        is_string = False
+    for idx,date in enumerate(dates):
         try: idx_out = datetime_idx_db[date]
         except KeyError: continue  # date probably of test before deployment
-        out[idx_out]=values[idx]        
+        out[idx_out]=values[idx] if not is_string else (values[idx] if values[idx] != 'nan' else '')
     return out
 
 
 def len_general(x):
     """returns 1 for scalars or None"""
-    if np.array(x).ndim>0: return len(np.array(x))    
+    if np.array(x).ndim>0: return len(np.array(x))
     return 1
 
 def merge(v1,v2):
@@ -360,10 +371,10 @@ def _nan_helper(y):
     return np.isnan(y), lambda z: z.nonzero()[0]
 
 def interpolate_over_NaN(data):
-    if len(data[data==data]) == 0: # all NaN
+    if len(data[data==data]) == 0:
         return data.copy()
-    data_out=data.copy()    
-    nans, x= _nan_helper(data_out)    
+    data_out=data.copy()
+    nans, x= _nan_helper(data_out)
     data_out[nans]= np.interp(x(nans), x(~nans), data_out[~nans])
     return data_out
 
@@ -379,7 +390,7 @@ def _detrend(y):
     return (y-np.polyval(p, x)).reshape(s)
 
 def remove_spikes(data,threshold=None,window=12):
-    """remove everything that deviates more than 500kPa from the median of a detrended 1-hour (12 points) window"""    
+    """remove everything that deviates more than 500kPa from the median of a detrended 1-hour (12 points) window"""
     # note that trends of 100kPa/hour are absolutely realistic
     #  so anything that departs by more than 500kPa from the trend should
     #  be pretty massive
@@ -387,11 +398,11 @@ def remove_spikes(data,threshold=None,window=12):
     # TODO: maybe change to detection of singular spikes
     #   since we do have sudden jumps from tension -> -100kPa
     #   that give high STD but are perfecty correct
-    
+
     # ignore the beginning, so data length is multiples of the window size
-    skip = len(data)-window*(len(data)//window)    
-    
-    a=data[skip:]    
+    skip = len(data)-window*(len(data)//window)
+
+    a=data[skip:]
 
     if True:
         # remove any Inf
@@ -399,16 +410,16 @@ def remove_spikes(data,threshold=None,window=12):
         a[a==-np.inf]=np.nan
         # remember where we had NaN/Inf
         NaN_idx = a!=a
-        # interpolate over NaN:        
-        a=interpolate_over_NaN(a)        
+        # interpolate over NaN:
+        a=interpolate_over_NaN(a)
 
-    b = a.reshape((len(a)//window,window))    
+    b = a.reshape((len(a)//window,window))
 
-    # this will fail if there are NaN (or Inf) in the arrary    
+    # this will fail if there are NaN (or Inf) in the arrary
     c = _detrend(b) # simulating scipy.signal.detrend(b,axis=1)
 
     median = np.median(c,axis=1)
-    
+
     if threshold is None:
         # if there is only a single peak in an array of length WINDOW
         #   then this peak will be N times the standard deviation of
@@ -419,23 +430,23 @@ def remove_spikes(data,threshold=None,window=12):
         enhance = 100. # constantrelating the typical spike height to
         #  to the typical noise floor (and window size?)
         #   and the noise floor variability to the noise floor median
-        std = np.std(c,axis=1)        
+        std = np.std(c,axis=1)
         # note: do not use mean, spikes of 1e16 reading would
         #  cause tremendous errors.
 
         # note: would be better to use 75-percentile rather than median
         threshold = n * enhance * _nanmedian(std) #_nanmedian( std )
-        
+
     median = np.repeat(median[:,None],window,axis=1)
     err = (np.fabs(c-median)>threshold).flatten()
     a[err] = np.nan # overwrite outliers
 
     a[NaN_idx] = np.nan # overwrite original NaN/Inf
-    
+
     # merge unfiltered with filtered data
     data_out = np.hstack((data[:skip],a))
     return data_out
-    
+
 def replace_value_with_NaN(data, value):
     data=data.copy()
     data[data==value]=np.nan
@@ -446,24 +457,29 @@ def replace_time_with_NaN(data, rep_time):
     if (isinstance(rep_time, str) or isinstance(rep_time, unicode)):
         rep_time = [rep_time,]
 
-    for rt in rep_time:        
+    if len(data)>0 and isinstance(data[0],str):
+        NAN = ''
+    else:
+        NAN = np.nan
+
+    for rt in rep_time:
         date = date_string_to_datetime(rt)
         if date == 'error':
-            raise ValueError('Could not decode date: %s' % rt)        
+            raise ValueError('Could not decode date: %s' % rt)
         if date not in datetime_idx_db:
             # unknown date, silently ignore
             #  (could be that the XML file is covering events in the future)
             # raise ValueError('Date does not exist: %s' % rt)
             continue
         index = datetime_idx_db[date]
-        data[index] = np.nan
+        data[index] = NAN
     return data
 
 
 def in_date_range(start, end):
-    """returns True for dates from (incl) until (excl)"""    
+    """returns True for dates from (incl) until (excl)"""
     return 1==_mask_values_with_datetime(np.ones((len(all_dates),)), date_string_to_datetime(start), date_string_to_datetime(end))
-    
+
 
 def forced_array_where(x,y,z):
     values = np.array(x)
@@ -478,21 +494,21 @@ def forced_array_where(x,y,z):
     if np.sum(values.flatten().shape) != len(datetime_idx_db):
         values = np.repeat(values, len(datetime_idx_db))
     z=values
-    
+
     return np.where(x,y,z)
 
 default_symtable={'ln':np.log,'log10':np.log10,'exp':np.exp,
                   'fabs':np.fabs,'abs':np.fabs,
-                  'sign':np.sign,                
+                  'sign':np.sign,
                   'sin':np.sin,'cos':np.cos,'tan':np.tan,
                   'arctan':np.arctan,'arctan2':np.arctan2,
                   'mean':np.nanmean,
                   'sum':np.nansum,'min':np.nanmin,'max':np.nanmax,
                   'round':np.round,
                   'where':forced_array_where, #np.where, # does not work as intended: comparison with scalar seems to fail
-                  'isnan':np.isnan,                  
+                  'isnan':np.isnan,
                   'len':len_general,
-                  'merge':merge,                  
+                  'merge':merge,
                   'remove_spikes':remove_spikes,
                   'replace_NaN_value':replace_value_with_NaN, # obsolete
                   'replace_value_with_NaN':replace_value_with_NaN,
@@ -500,7 +516,7 @@ default_symtable={'ln':np.log,'log10':np.log10,'exp':np.exp,
                   'in_date_range':in_date_range, # for use with where()
                   'float':float, # type casting (and to define NaN)
                   '_a':np.array,
-                  '_datetime':datetime,                  
+                  '_datetime':datetime,
                   'None': None}
 default_symtable['_apply_datetime_mask']=apply_datetime_mask
 default_symtable['_make_data_vector']=make_data_vector
@@ -525,17 +541,17 @@ def _substitute_symbol(test_string, symbol, substitute):
 
 def _symbol_convert(test_string, user_vars,sub_symbol=None,substitute=None):
     debug = False
-     
+
     string=test_string.strip()
     out = ''
     substituted = False
 
     if ("'" in test_string) and ('"' in test_string):
         raise ValueError("Symbol search will get confused by presence of both \" and ' in string %s" % test_string)
-            
+
     if debug: print('input: '+string)
 
-    while True:        
+    while True:
         #found = re.search('[_a-zA-Z][_a-zA-Z0-9]* *',string)
         # ignores symbols unless there is an even number of " (or none) to follow
         #found = re.search('([_a-zA-Z][_a-zA-Z0-9]* *)(?=(?:[^"]|"[^"]*")*$)',string)
@@ -557,14 +573,14 @@ def _symbol_convert(test_string, user_vars,sub_symbol=None,substitute=None):
                 if debug: print('already declared as function, not interesting')
                 ignore = True
 
-        if user_vars is not None:            
+        if user_vars is not None:
             out += string[:found.end()]
-            if not ignore:            
+            if not ignore:
                 if symbol in user_vars:
                     out += '()'
                 else:
                     if debug: print('not user variable, ignore.')
-                    
+
         elif (sub_symbol is not None) and (substitute is not None):
             if not ignore:
                 if sub_symbol == symbol:
@@ -577,19 +593,19 @@ def _symbol_convert(test_string, user_vars,sub_symbol=None,substitute=None):
                     out += string[:found.end()]
             else:
                 out += string[:found.end()]
-                                
 
-        string = string[found.end():]    
+
+        string = string[found.end():]
 
     if debug: print('result: '+out)
-    
+
     if user_vars is None: return out, substituted
     return out
 
 
 
 def _datetime_str(dt):
-    if dt is None: return 'None'   
+    if dt is None: return 'None'
     out = '_datetime.datetime('
     out += '%i,%i,%i,%i,%i)' % (dt.year,dt.month,dt.day,dt.hour,dt.minute)
     return out
@@ -599,7 +615,7 @@ def _datetime_list_str(dts):
     for dt in dts:
         out.append(_datetime_str(dt))
     return '['+','.join(out)+']'
-        
+
 
 def log_errors(env):
     if len(env.error)>0:
@@ -611,15 +627,14 @@ def add_env(env,txt):
         env.add(txt)
     else:
         env(txt,show_errors=show_errors)
-    log_errors(env)    
-        
+    log_errors(env)
 
 def is_None_or_empty(x):
     return (x is None) or (x=='')
 
 def _make_expression(expr,src,user_vars):
     # assumes that at least one of expr and src is not None
-            
+
     if not is_None_or_empty(src):
         # postpone calculation and treat variable like function
         #   like all other variables.
@@ -634,12 +649,12 @@ def _make_expression(expr,src,user_vars):
 
     if is_None_or_empty(expr):
         expr = src_expr
-            
+
     # replace all user-defined constants/symbols with functions
     # find all symbols not followed by "("
     #   if user-defined, replace with symbol followed by ()
     # repeat
-    
+
     expr=_turn_user_symbols_into_function_calls(expr, user_vars)
     return expr
 
@@ -648,7 +663,7 @@ def _sanitized_var_name(name):
     except UnicodeDecodeError:
         try: name = unicode(name,'latin1') # if function is called directly, may be other code page
         except UnicodeDecodeError:
-            raise            
+            raise
     name = name.replace(' ','_')
     return re.subn('[^0-9a-zA-Z_]','_',name)[0]
 
@@ -656,7 +671,7 @@ def _make_global_var_name(element):
     """creates a global name for the MAP element"""
     if element.tag != XML_map:
         raise ValueError('Expected element <%s> for variable name definition, found <%s>' % (XML_map,element.tag))
-        
+
     base_name = _get_attrib_or_None(element,XML_attr_name)
     if base_name is None:
         # a MAP element needs to have a name
@@ -681,17 +696,17 @@ def _make_global_var_name(element):
     if h[0]=='-': h='M'+h[1:]
     name= '_VAR_'+total_group_name+base_name+'_'+h
     return _sanitized_var_name(name)
-        
+
 def make_environment(measurements,env=None):
     # 3. walk through <MEASUREMENT> and <GROUP> elements to find all <MAP> and <DEF> elements
     # 3a.  extract var/src pairs and keep in list. do not add to dictionary
     # 3b.  extract var/is pairs and evaluate 'def' statement (check for var name space collisions)
     #        account for from/until by extracting from/until range and adding decorators (decorators should test for scalar: in this case, no from/until adjustment should be performed)
-    if env == None:
+    if env is None: # changed == to is, 25 Dec 2018
         env=Interpreter(use_numpy=False)
         env.symtable=default_symtable.copy()
         add_env(env,'NaN=float("nan")')
-        add_env(env,'PI=3.14159265359')        
+        add_env(env,'PI=3.14159265359')
 
     # find all tags, regardless of nesting:
     elements = ( get_all_XML_tags(measurements,XML_def) +
@@ -703,21 +718,21 @@ def make_environment(measurements,env=None):
         if var is None:
             # 21 Mar 2015: we define a (unique) variable ALWAYS
             var = _make_global_var_name(element)
-            
+
         real_var = var
-        
+
         src = _get_attrib_or_None(element,XML_attr_src)
         expr = _get_attrib_or_None(element,XML_attr_expr)
         if (src is None) and (expr is None):
             raise ValueError('Neither %s nor %s defined for %s="%s".' %
                              (XML_attr_src,XML_attr_expr,XML_attr_var,real_var))
-        
+
         expr0 = expr
         real_var0 = real_var
 
         if '(' not in real_var:
             real_var=real_var.strip() + '()'
-    
+
         expr = _make_expression(expr,src,user_vars)
 
         if True:
@@ -725,8 +740,8 @@ def make_environment(measurements,env=None):
                 # define function
                 real_fn_name = real_var.split('(')[0]
                 txt ='def %s: return %s' % (real_var,expr)
-                add_env(env,txt)                
-                
+                add_env(env,txt)
+
                 # find smallest time range
                 start, end = get_defined_date_range(element)
                 start_dt=_datetime_str(start)
@@ -741,7 +756,7 @@ def make_environment(measurements,env=None):
                        start_dt,end_dt,
                        starts_dt,ends_dt))
                 add_env(env,txt)
-                
+
                 # store debug information
                 # we replace ' with " to avoid a syntax error. expr0/expr can be None but they cannot be numbers (0)
                 txt = ("%s.__name__='%s given %s defined %s from %s until %s'" %
@@ -749,7 +764,7 @@ def make_environment(measurements,env=None):
                         (expr0 or 'None').replace("'",'"'), (expr or 'None').replace("'",'"'),
                         start,end))
                 add_env(env,txt)
-                                
+
     return env
 
 
@@ -757,8 +772,8 @@ def make_environment(measurements,env=None):
 # XML processing
 
 def get_all_XML_tags(root, tag_name):
-    """Return list of tag elements or list of self"""    
-    if root.tag == tag_name: return [root]    
+    """Return list of tag elements or list of self"""
+    if root.tag == tag_name: return [root]
     return root.findall('.//'+tag_name)
 
 def _get_attrib_or_None(element, attribute):
@@ -780,7 +795,7 @@ def date_string_to_datetime(date):
     return date_date
 
 def _get_xml_date(element, attribute):
-    """Return date or None"""    
+    """Return date or None"""
     try:
         date = element.attrib[attribute]
         if len(date.strip())==0: date = None
@@ -788,13 +803,13 @@ def _get_xml_date(element, attribute):
         date = None
 
     date_date = None
-    
+
     if date != None:
         date_date = date_string_to_datetime(date)
 
     if date_date == 'error':
         raise ValueError('Invalid format for date: %s' % date)
-            
+
     return date_date
 
 def _get_date_interval_of_all_parents(root, except_interval=False):
@@ -810,11 +825,11 @@ def _get_date_interval_of_all_parents(root, except_interval=False):
         if (f is not None) or (u is not None):
             intervals[0].append( f )
             intervals[1].append( u )
-    return intervals    
+    return intervals
 
 def get_defined_date_range(element):
-    
-    # get date range specified by parents            
+
+    # get date range specified by parents
     starts,ends = _get_date_interval_of_all_parents(element)
 
     # add date range specified in current element
@@ -848,7 +863,7 @@ def get_defined_except_date_range(element):
         ends.append(euntil)
 
     return starts, ends
-    
+
 
 def _dates_in_range(dates, start_list, end_list):
     """Returns boolean array of dates in range"""
@@ -856,11 +871,11 @@ def _dates_in_range(dates, start_list, end_list):
     for i in xrange(len(start_list)):
         if start_list[i] is not None:
             ok = ok * (dates>=start_list[i])
-            
+
         if global_until_mode == XML_flag_until_inclusive:
             if end_list[i] is not None:
                 ok = ok * (dates<=end_list[i])
-            
+
         elif global_until_mode == XML_flag_until_exclusive:
             if end_list[i] is not None:
                 ok = ok * (dates<end_list[i])
@@ -878,7 +893,7 @@ def get_all_mapped_dates(data, root):
     all_dates = set()
     start_global = _get_xml_date(root, XML_attr_from)
     end_global = _get_xml_date(root, XML_attr_until)
-    # go through every mapping entry   
+    # go through every mapping entry
     maps = get_all_XML_tags(root,XML_map) + get_all_XML_tags(root,XML_def)
     sources = {}
     for entry in maps:
@@ -886,20 +901,20 @@ def get_all_mapped_dates(data, root):
         except: continue # does not have SRC attribute --> does not access data
 
         sources[key]=entry
-        
-        # get date range specified by parents            
+
+        # get date range specified by parents
         starts,ends = _get_date_interval_of_all_parents(entry)
 
         # add date range specified in current element
         starts.append(_get_xml_date(entry,XML_attr_from))
         ends.append(_get_xml_date(entry,XML_attr_until))
-        
+
         # get measured dates
         dates = data[key]['dates']
         # get valid measured dates as specified by mapping
         #  --> connect through AND
         ok = _dates_in_range(dates,starts, ends)
-        
+
         # unite with current list (use sets for speed)
         #  --> connect through OR
         all_dates = all_dates.union( dates[ok] )
@@ -907,7 +922,7 @@ def get_all_mapped_dates(data, root):
     # sort
     all_dates = np.array(list(all_dates))
     all_dates = np.sort(all_dates)
-        
+
     return all_dates, sources
 
 
@@ -920,7 +935,7 @@ def make_header(sheet, datetime_string=None):
     info = metadata_header
     info.append(["File Time:", datetime_string])
 
-    meta = {}    
+    meta = {}
     for row in xrange(len(info)):
         sheet.write_row(row,0,info[row])
         meta[info[row][0]]=info[row][1]
@@ -929,13 +944,13 @@ def make_header(sheet, datetime_string=None):
     return len(info), meta
 
 
-def _write_dates(sheet, row0, all_dates):    
+def _write_dates(sheet, row0, all_dates):
     number_format='yyyy/m/d h:mm'
     for row in xrange(len(all_dates)):
-        sheet['A%i' % (row+row0)] = all_dates[row]        
+        sheet['A%i' % (row+row0)] = all_dates[row]
         sheet['A%i' % (row+row0)].number_format = number_format
 
-def cell_apply_style(cell, style):    
+def cell_apply_style(cell, style):
     for key in style.__dict__:
         exec('cell.%s=style.%s' % (key,key)) #XYZ
 
@@ -974,17 +989,17 @@ def write_all(workbook,sheet, row0, groups, all_dates, data):
         s_header_group = workbook.add_format({'bold':True})
         s_header_group.set_align('center')
         s_header_group.set_left()
-        
+
         data_format='0.00'
         s_data=workbook.add_format()
         s_data1=workbook.add_format()
         s_data.set_num_format(data_format)
-        s_data1.set_num_format(data_format)        
-        s_data1.set_left()        
+        s_data1.set_num_format(data_format)
+        s_data1.set_left()
 
     N_dates = len(all_dates)
 
-    if True:        
+    if True:
         # Time column
         #logger_time_unit should be defined in configuration file
         sheet.write(row_name,date_col,'Time',s_header)
@@ -992,7 +1007,7 @@ def write_all(workbook,sheet, row0, groups, all_dates, data):
             sheet.write(row_units,date_col,logger_time_unit,s_unit)
 
         if True:
-            # write dates            
+            # write dates
             for y in xrange(len(all_dates)):
                 sheet.write_datetime(row_data+y,date_col, all_dates[y], s_date)
             sheet.set_column(date_col,date_col,16) # set column width for YYYY/MM/DD HH:MM
@@ -1003,7 +1018,7 @@ def write_all(workbook,sheet, row0, groups, all_dates, data):
         # walk through MAP and SET elements
         maps=extract_MAPs_in_order(group)
         if len(maps) == 0: continue # nothing to output in this group
-        # write group headers        
+        # write group headers
         g_name = _get_attrib_or_None(group, XML_attr_name)
         if g_name is None: g_name = '' # should not be None per DTD
         if len(maps)>1:
@@ -1028,7 +1043,7 @@ def write_all(workbook,sheet, row0, groups, all_dates, data):
             if u_name is None: u_name = ''
             if row_units is not None:
                 sheet.write(row_units,col,u_name,s_unit if idx>0 else s_unit1)
-                
+
         # write data of this group
         for idx in xrange(len(maps)):
             element = maps[idx]
@@ -1040,10 +1055,10 @@ def write_all(workbook,sheet, row0, groups, all_dates, data):
 
             # get function returing this variable possibly by
             #   pulling automatically generated name
-            var = _get_attrib_or_None(element, XML_attr_var)            
+            var = _get_attrib_or_None(element, XML_attr_var)
             if var is None:
                 var = _make_global_var_name(element)
-                
+
             # simply call function with this variable name
             var = _make_expression(var,None,user_vars)
             values = env(var)
@@ -1052,35 +1067,38 @@ def write_all(workbook,sheet, row0, groups, all_dates, data):
                 # DEBUG. This will lead to an error in loop...
                 print('evaluating var "%s" returned None' % var)
                 print(' defined:\n%s' % '\n'.join([key for key in user_vars]))
-                
-                      
-            
+
+
+
             # write all data of this element
             # INF or NAN cannot be written, so we do this one-by-one
             for idx2 in xrange(len(values)):
 
                 if values[idx2]==values[idx2]: #TEST FOR INF XYZ
                     # don't write NaN -- this causes Excel to emit a warning during opening
-                    sheet.write_number(row_data+idx2,col,values[idx2], s_data if idx>0 else s_data1)
+                    if isinstance(values[idx2],str):
+                        sheet.write(row_data+idx2,col,values[idx2])
+                    else:
+                        sheet.write_number(row_data+idx2,col,values[idx2], s_data if idx>0 else s_data1)
                 else:
                     # write blank so we can store format
                     sheet.write_blank(row_data+idx2,col,None, s_data if idx>0 else s_data1)
-                
+
                 #out_values[idx2]=values[idx2]
-            
+
             if name in structure[g_name]:
                 raise ValueError('Multiple use of element name "%s" in group "%s".' % (
                     name, g_name))
-                                 
+
             structure[g_name][name]={'unit':u_name,'values':values.copy()}
 
 
-        col_group += len(maps)    
+        col_group += len(maps)
 
-    return structure        
+    return structure
 
 def extract_MAPs_in_order(group):
-    """get all MAP elements, including those in nested SET elements"""    
+    """get all MAP elements, including those in nested SET elements"""
 
     # flatten the group and inspect all elements separately
     children=group.getiterator()
@@ -1088,7 +1106,7 @@ def extract_MAPs_in_order(group):
     for child in children:
         if child.tag in (XML_map,): maps.append(child)
 
-    return maps 
+    return maps
 
 def write_sources(workbook, sheet, sources):
     s_title=workbook.add_format({'bold':True})
@@ -1105,14 +1123,14 @@ def write_sources(workbook, sheet, sources):
     else:
         sheet.write(row,col,
                     'Data are ordered according to logger table definition.')
-        
+
     row += 1
     row += 1
-    
-    col = 1 # first data column    
+
+    col = 1 # first data colums
     all_keys = list(sources.keys())
     all_keys.sort()
-    keys = make_data_vector_log[:] # create copy    
+    keys = make_data_vector_log[:] # create copy
     for key in all_keys:
         if key not in keys: keys.append(key)
 
@@ -1128,12 +1146,12 @@ def write_sources(workbook, sheet, sources):
                 keys.remove(key)
         ordered_keys += keys # in case there is anything left
         keys = ordered_keys
-    
+
     inf,m_inf = float('inf'), float('-inf')
     sheet.write_row(row,col,keys,s_header)
     sheet.write(row,col-1,'TIMESTAMP',s_header)
     row += 1
-    
+
     if True:
         # write dates
         number_format='yyyy/m/d h:mm'
@@ -1142,19 +1160,19 @@ def write_sources(workbook, sheet, sources):
         for y in xrange(len(all_dates)):
             sheet.write_datetime(row+y,col-1, all_dates[y], fmt_date)
         sheet.set_column(col-1,col-1,16)
-            
+
     for x,key in enumerate(keys):
         v=make_data_vector(key)
         for y,value in enumerate(v):
             if ((value==value) and
                 (value != inf) and
                 (value != m_inf)): sheet.write(row+y,col+x, value)
-        
+
 def write_DTD(workbook, sheet):
     col = 0
     row = 0
     s_header=workbook.add_format({'bold':True})
-    
+
     sheet.write(row,col,
                 'Document Type Definition (DTD) of XML definition',
                 s_header)
@@ -1163,18 +1181,18 @@ def write_DTD(workbook, sheet):
     for line in DTD_list:
         sheet.write(row,col,line.strip())
         row += 1
-    
+
 def write_XML_file(workbook, sheet, filename, root):
     text = ET_tostring(root,encoding='unicode',pretty_print=True)
     fn = os.path.basename(filename)
     col = 0
     row = 0
     s_header=workbook.add_format({'bold':True})
-    
+
     sheet.write(row,col,
                 'XML definition describing the relationship between raw data from the logger and displayed data',
                 s_header)
-                
+
     row +=1
     sheet.write(row,col,'Filename:',s_header)
     sheet.write(row,col+1,fn,s_header)
@@ -1185,7 +1203,7 @@ def write_XML_file(workbook, sheet, filename, root):
     for line in text.split('\n'):
         # we strip both ends since lxml ignored spaces but keept tab,
         #  so the result would be inconsistent to say the least
-        
+
         # check generated indentation level
         level=0
         while (len(line)>0) and (line[0]=='\t'):
@@ -1196,7 +1214,7 @@ def write_XML_file(workbook, sheet, filename, root):
             indent_fmt[level]=workbook.add_format()
             indent_fmt[level].set_indent(level)
         fmt = indent_fmt[level]
-        
+
         l = line.strip()
         if len(l) < 250:
             sheet.write(row,col,l,fmt)
@@ -1209,7 +1227,7 @@ def write_XML_file(workbook, sheet, filename, root):
                 row += 1
 
 def set_workbook_properties(workbook):
-    workbook.set_properties({        
+    workbook.set_properties({
         'category': 'Data',
         'comments': 'rawdatx XML processor %s with %s' % (REVISION,
                                                           ', '.join(_using))
@@ -1224,7 +1242,7 @@ def _parse_config(config_file):
     global fn_out_excel, fn_out_structure
     global fn_path_output_DTD
     global metadata_header
-    
+
     def cfg_get_string(cfg, section, item):
         string = config.get(section,item)
         string = string.strip()
@@ -1238,15 +1256,15 @@ def _parse_config(config_file):
     _default_optionxform = config.optionxform
     config.read(config_file)
 
-    CFG_fn_path='Files'    
+    CFG_fn_path='Files'
     path_in = cfg_get_string(config,CFG_fn_path,'data_path')
     path_out = cfg_get_string(config,CFG_fn_path,'data_path')
-    
+
     try: xml_path = cfg_get_string(config,CFG_fn_path,'xml_map_path')
     except configparser.NoOptionError: xml_path = path_in
-    
+
     fn_in_npy = cfg_get_string(config,CFG_fn_path,'raw_data')
-    fn_in_xml_definition = cfg_get_string(config,CFG_fn_path,'xml_map')    
+    fn_in_xml_definition = cfg_get_string(config,CFG_fn_path,'xml_map')
     fn_out_excel = cfg_get_string(config,CFG_fn_path,'processed_data_xlsx')
     fn_out_structure = cfg_get_string(config,CFG_fn_path,'processed_data_npy')
 
@@ -1255,7 +1273,7 @@ def _parse_config(config_file):
         fn_path_output_DTD=os.path.join(path_out,fn_path_output_DTD)
     except:
         fn_path_output_DTD= None
-    
+
 
     CFG_metadata='Metadata'
     # remove section and reload in a case-sensitive manner
@@ -1281,11 +1299,11 @@ def main(config_file, file_time_string=None):
     global global_until_mode
     #
     global tree
-    
+
     _parse_config(config_file)
 
     # init globals
-    
+
     # dates are handled as datettime objects so we won't introduce problems with rounding
     datetime_idx_db={} # dictionary holding assignment <datetime object> -> <entry number>
     # used to find index for from/until decorators
@@ -1302,13 +1320,13 @@ def main(config_file, file_time_string=None):
 
     if fn_path_output_DTD is not None:
         out = ''
-        out += '<!-- generated by parser version %s -->\r\n' % REVISION        
+        out += '<!-- generated by parser version %s -->\r\n' % REVISION
         out += '\r\n'.join(DTD_list)
-        out += '\r\n'        
-        
+        out += '\r\n'
+
         with open(fn_path_output_DTD,'wt') as f:
             f.write(out)
-        
+
     # reading data
     data = np.load(path_in+fn_in_npy).item()
     if True:
@@ -1316,17 +1334,17 @@ def main(config_file, file_time_string=None):
         header_order_key_name = '__header_order_encountered__'
         if header_order_key_name in data:
             variable_order = data[header_order_key_name][:]
-            del data[header_order_key_name]        
+            del data[header_order_key_name]
         else:
             variable_order = None
-        
+
     logger_time_unit = data[list(data.keys())[0]]['time zone']
 
     dtd=ET_DTD(StringIO(DTD_declaration))
     # read spreadheet data definition
-    
-    #parser=ET.XMLParser(dtd_validation=True)    
-    
+
+    #parser=ET.XMLParser(dtd_validation=True)
+
     tree = ET_parse(xml_path+fn_in_xml_definition) #,parser=parser)
     valid = dtd.validate(tree)
     if not valid:
@@ -1355,7 +1373,7 @@ def main(config_file, file_time_string=None):
         if global_until_mode is None:
             global_until_mode=global_until_mode_default
             print('WARNING: Attribute "%s" not specified, implying "%s".' % (XML_attr_until_mode,global_until_mode))
-            
+
         global_until_mode = global_until_mode.lower()
         # if specified it had better be valid
         if global_until_mode not in (XML_flag_until_inclusive,XML_flag_until_exclusive,XML_flag_until_disallowed):
@@ -1363,7 +1381,7 @@ def main(config_file, file_time_string=None):
                              (XML_attr_until_mode,
                               XML_flag_until_inclusive, XML_flag_until_exclusive,
                               XML_flag_until_disallowed))
-        
+
     if True:
         all_dates, sources = get_all_mapped_dates(data,measurements)
         for idx, date in enumerate(all_dates):
@@ -1371,7 +1389,7 @@ def main(config_file, file_time_string=None):
 
     if True:
         # make list of user-defined symbols
-        
+
         # find all tags, regardless of nesting:
         elements = ( get_all_XML_tags(measurements,XML_def) +
                      get_all_XML_tags(measurements,XML_map) )
@@ -1401,7 +1419,7 @@ def main(config_file, file_time_string=None):
 #    dump_symbols(env.symtable,default_symtable)
 
     groups = get_all_XML_tags(measurements,XML_group)
-        
+
     if True:
         # make sure that
         # (a) no two groups have the same name (except empty)
@@ -1421,7 +1439,7 @@ def main(config_file, file_time_string=None):
 
             if error:
                 raise ValueError('Found multiple occurrences of group name "%s" or use of reserved group name.' % name)
-            
+
     # make new workbook
     wb = xlsxwriter.Workbook(path_out+fn_out_excel+'-temp',
                              {'strings_to_numbers':  False,
@@ -1429,19 +1447,19 @@ def main(config_file, file_time_string=None):
                               'strings_to_urls':     False})
 
     set_workbook_properties(wb)
-    
-    sheet = wb.add_worksheet('Data')    
-    
+
+    sheet = wb.add_worksheet('Data')
+
     row,metadata = make_header(sheet, file_time_string)
     row_group_name = row+2
-    
+
     structure = write_all(wb,sheet, row_group_name, groups, all_dates, data)
     structure['metadata']=metadata
     structure['Program_Version']=REVISION
-    
+
     if True:
-        # copy XML file used to create XLSX file        
-        sheet_XML = wb.add_worksheet('Data Definition')        
+        # copy XML file used to create XLSX file
+        sheet_XML = wb.add_worksheet('Data Definition')
         write_XML_file(wb,sheet_XML, xml_path+fn_in_xml_definition, tree.getroot())
         sheet_DTD = wb.add_worksheet('DTD')
         write_DTD(wb,sheet_DTD)
@@ -1450,8 +1468,7 @@ def main(config_file, file_time_string=None):
         # output raw data
         sheet_sources = wb.add_worksheet('Raw Data')
         write_sources(wb,sheet_sources, sources)
-        
-        
+
     np.save(path_out+fn_out_structure,structure)
 
     # we write to a temporary file and rename since the writing process
@@ -1487,13 +1504,13 @@ def _test_detrend():
         raise NotImplementedError('Scipy not imported successfully.')
     N=100
     np.random.seed(1234)
-    
+
     y=np.cumsum(np.random.random(N))
     a=_detrend(y)
     b=ss.detrend(y)
     print(np.max(np.fabs(a-b)))
     # 2.13162820728e-14
-    
+
     y=y[None,:]
     a=_detrend(y)
     b=ss.detrend(y,axis=1)
@@ -1509,4 +1526,3 @@ if __name__=='__main__':
         config_file = sys.argv[1]
 
     main(config_file)
-    
